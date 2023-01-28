@@ -9,7 +9,7 @@
 
 .search-entry {
     border-radius: 999px;
-    min-width: 300px;
+    min-width: 200px;
     background: alpha(shade(@view_bg_color, 0.9), 0.8);
 }
 
