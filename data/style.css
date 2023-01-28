@@ -1,0 +1,14 @@
+.hb-blur {
+    filter: blur(10px);
+    background: alpha(@view_bg_color, 0.6);
+    min-height: 106px;
+}
+.hb {
+    background: alpha(@view_bg_color, 0.8);
+}
+
+.search-entry {
+    border-radius: 999px;
+    min-width: 300px;
+    background: alpha(shade(@view_bg_color, 0.9), 0.8);
+}

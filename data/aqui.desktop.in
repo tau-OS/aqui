@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Aqui
+Comment=View where to go
+Categories=GTK;Utility;Science;Maps;
+Exec=com.fyralabs.Aqui
+Icon=com.fyralabs.Aqui
+Type=Application
+Terminal=false
+Keywords=Trip;Explore;
