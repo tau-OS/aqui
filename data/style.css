@@ -5,6 +5,7 @@
 }
 .hb {
     background: alpha(@view_bg_color, 0.8);
+    min-height: 106px;
 }
 
 .search-entry {
