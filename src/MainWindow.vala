@@ -7,11 +7,22 @@ public class Aqui.MainWindow : He.ApplicationWindow {
     private Gtk.ListStore location_store;
     private GLib.Cancellable search_cancellable;
 
+    public const string ACTION_PREFIX = "win.";
+    public const string ACTION_ABOUT = "about";
+    public SimpleActionGroup actions;
+    private const GLib.ActionEntry[] ACTION_ENTRIES = {
+        {ACTION_ABOUT, action_about },
+    };
+
     public MainWindow (He.Application app) {
         Object (
             application: app,
             title: "Aqui"
         );
+
+        actions = new SimpleActionGroup ();
+        actions.add_action_entries (ACTION_ENTRIES, this);
+        insert_action_group ("win", actions);
     }
 
     construct {
@@ -73,12 +84,34 @@ public class Aqui.MainWindow : He.ApplicationWindow {
                 viewtitle_widget = box
             };
             headerbar_blur.add_css_class ("hb-blur");
+
+            var menu_popover = new Gtk.Popover () {
+                autohide = true
+            };
+            var about_menu_item = create_button_menu_item (
+                                                           _("About Fusebox…"),
+                                                           "win.about"
+                                                          );
+            about_menu_item.clicked.connect (() => {
+                menu_popover.popdown ();
+            });
+            var menu_popover_grid = new Gtk.Grid () {
+                orientation = Gtk.Orientation.VERTICAL
+            };
+            menu_popover_grid.attach (about_menu_item, 0, 0, 1, 1);
+            menu_popover.child = menu_popover_grid;
+
+            var menu_button = new Gtk.MenuButton () {
+                popover = menu_popover,
+                icon_name = "open-menu-symbolic"
+            };
     
             var headerbar = new He.AppBar () {
                 show_back = false,
                 show_buttons = true
             };
             headerbar.viewtitle_widget = (search_entry);
+            headerbar.append (menu_button);
             headerbar.append (spinner);
             headerbar.add_css_class ("hb");
     
@@ -144,6 +177,42 @@ public class Aqui.MainWindow : He.ApplicationWindow {
         } catch (Error e) {
             
         }
+    }
+
+    public void action_about () {
+        // TRANSLATORS: 'Name <email@domain.com>' or 'Name https://website.example'
+        string translators = (_(""));
+
+        var about = new He.AboutWindow (
+            this,
+            "Aqui",
+            "com.fyralabs.Aqui",
+            "0.1.0",
+            "com.fyralabs.Aqui",
+            "https://github.com/tau-OS/aqui/tree/main/po",
+            "https://github.com/tau-OS/aqui/issues/new",
+            "https://github.com/tau-OS/aqui",
+            {translators},
+            {"The tauOS team"},
+            2023, // Year of first publication.
+            He.AboutWindow.Licenses.GPLv3,
+            He.Colors.GREEN
+        );
+        about.present ();
+    }
+
+    private Gtk.Button create_button_menu_item (string label, string? action_name) {
+        var labelb = new Gtk.Label (label) {
+            xalign = 0
+        };
+        var button = new Gtk.Button () {
+            child = labelb,
+            hexpand = true
+        };
+        button.set_action_name (action_name);
+        button.add_css_class ("flat");
+        button.add_css_class ("menu-button");
+        return button;
     }
 
     private void show_current_location () {
