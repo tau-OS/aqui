@@ -89,7 +89,7 @@ public class Aqui.MainWindow : He.ApplicationWindow {
                 autohide = true
             };
             var about_menu_item = create_button_menu_item (
-                                                           _("About Fusebox…"),
+                                                           _("About Aqui…"),
                                                            "win.about"
                                                           );
             about_menu_item.clicked.connect (() => {
