@@ -1,5 +1,8 @@
 public class Aqui.MainWindow : He.ApplicationWindow {
+    private Aqui.GeoClue geo_clue;
     private Gtk.Spinner spinner;
+    private Shumate.SimpleMap smap;
+    private Gtk.ListStore location_store;
 
     public MainWindow (He.Application app) {
         Object (
@@ -9,6 +12,9 @@ public class Aqui.MainWindow : He.ApplicationWindow {
     }
 
     construct {
+        geo_clue = new Aqui.GeoClue ();
+        location_store = new Gtk.ListStore (2, typeof (Geocode.Place), typeof (string));
+
         try {
             var renderer = new Shumate.RasterRenderer.from_url ("https://tile.openstreetmap.org/{z}/{x}/{y}.png") {
                 name = "OpenStreetMap",
@@ -22,7 +28,7 @@ public class Aqui.MainWindow : He.ApplicationWindow {
             var registry = new Shumate.MapSourceRegistry.with_defaults ();
             registry.add (renderer);
 
-            var map = new Shumate.SimpleMap () {
+            smap = new Shumate.SimpleMap () {
                 map_source = renderer,
                 show_zoom_buttons = false
             };
@@ -65,7 +71,7 @@ public class Aqui.MainWindow : He.ApplicationWindow {
     
             var main_box = new Gtk.Overlay ();
             main_box.add_overlay (headerbar_overlay);
-            main_box.set_child (map);
+            main_box.set_child (smap);
     
             var overlay_button = new He.OverlayButton ("mark-location-symbolic", null, null);
             overlay_button.child = main_box;
@@ -119,6 +125,13 @@ public class Aqui.MainWindow : He.ApplicationWindow {
 
     private void show_current_location () {
         Spinner.activate (spinner, _("Detecting your current location…"));
+
+        geo_clue.get_current_location.begin ((obj, res) => {
+            var location = geo_clue.get_current_location.end (res);
+            smap.get_map ().center_on (location.latitude, location.longitude);
+            smap.get_map ().go_to_full (location.latitude, location.longitude, 19);
+            Spinner.deactivate (spinner);
+        });
 
         Timeout.add (5000, () => {
             Spinner.deactivate (spinner);

@@ -29,6 +29,7 @@ sources = files(
     'src' / 'Application.vala',
     'src' / 'MainWindow.vala',
     'src' / 'Spinner.vala',
+    'src' / 'GeoClue.vala',
 )
 
 asresources = gnome.compile_resources(
@@ -46,7 +47,9 @@ executable(
         dependency('gio-2.0'),
         dependency('libhelium-1'),
         dependency('shumate-1.0'),
-        dependency('gtk4')
+        dependency('gtk4'),
+        dependency('geocode-glib-2.0'),
+        dependency('libgeoclue-2.0'),
     ],
     install: true
 )
