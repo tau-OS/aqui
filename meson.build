@@ -30,6 +30,7 @@ sources = files(
     'src' / 'MainWindow.vala',
     'src' / 'Spinner.vala',
     'src' / 'GeoClue.vala',
+    'src' / 'LocationMarker.vala',
 )
 
 asresources = gnome.compile_resources(
