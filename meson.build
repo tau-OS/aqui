@@ -30,6 +30,7 @@ sources = files(
     'src/MainWindow.vala',
     'src/Spinner.vala',
     'src/GeoClue.vala',
+    'src/Favorites.vala',
     'src/LocationMarker.vala',
     'src/Wikipedia.vala',
 )

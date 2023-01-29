@@ -9,6 +9,7 @@ public class Aqui.MainWindow : He.ApplicationWindow {
     private GLib.Cancellable search_cancellable;
     private He.Desktop desktop = new He.Desktop ();
 
+    public ListStore fav_store = new ListStore (typeof (Geocode.Place));
     public He.Application app {get; construct;}
     public Shumate.SimpleMap smap;
     public const string ACTION_PREFIX = "win.";
@@ -88,8 +89,8 @@ public class Aqui.MainWindow : He.ApplicationWindow {
             };
     
             search_entry = new Gtk.Entry () {
-                placeholder_text = _("Search Location"),
-                tooltip_text = _("Search Location"),
+                placeholder_text = _("Search Locations…"),
+                tooltip_text = _("Search Locations…"),
                 primary_icon_name = "system-search-symbolic",
                 valign = Gtk.Align.CENTER,
                 halign = Gtk.Align.START
@@ -106,7 +107,8 @@ public class Aqui.MainWindow : He.ApplicationWindow {
             headerbar_blur.add_css_class ("hb-blur");
 
             var menu_popover = new Gtk.Popover () {
-                autohide = true
+                autohide = true,
+                has_arrow = false
             };
             var about_menu_item = create_button_menu_item (
                                                            _("About Aqui…"),
@@ -126,13 +128,12 @@ public class Aqui.MainWindow : He.ApplicationWindow {
                 icon_name = "open-menu-symbolic"
             };
 
-            var fav_menu_popover = new Gtk.Popover () {
+            var fav_menu_popover = new Favorites (this) {
                 autohide = true
             };
-            var fav_menu_popover_grid = new Gtk.Grid () {
-                orientation = Gtk.Orientation.VERTICAL
-            };
-            fav_menu_popover.child = fav_menu_popover_grid;
+            fav_menu_popover.list.bind_model (fav_store, (data) => {
+                return new FavoriteRow ((Geocode.Place) data);
+            });
 
             var main_fav_button = new Gtk.MenuButton () {
                 popover = fav_menu_popover,
@@ -343,6 +344,10 @@ public class Aqui.MainWindow : He.ApplicationWindow {
             bubble.visible = false;
             search_entry.text = "";
             point.dispose ();
+        });
+
+        child.fav_button.clicked.connect (() => {
+            fav_store.insert (0, loc);
         });
     }
 

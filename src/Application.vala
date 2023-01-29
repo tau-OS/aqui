@@ -23,6 +23,8 @@ public class Aqui.Application : He.Application {
 
         var mw = new MainWindow (this);
 
+        typeof(FavoriteRow).ensure ();
+
         settings.bind ("window-height", mw, "default-height", SettingsBindFlags.DEFAULT);
         settings.bind ("window-width", mw, "default-width", SettingsBindFlags.DEFAULT);
         if (settings.get_boolean ("maximized")) {
