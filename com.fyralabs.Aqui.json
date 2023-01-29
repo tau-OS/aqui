@@ -27,6 +27,22 @@
     ],
     "modules": [
         {
+            "name" : "geocode-glib",
+            "buildsystem" : "meson",
+            "config-opts" : [
+                "-Denable-installed-tests=false",
+                "-Denable-introspection=true",
+                "-Denable-gtk-doc=false",
+                "-Dsoup2=false"
+            ],
+            "sources" : [
+                {
+                    "type" : "git",
+                    "url" : "https://gitlab.gnome.org/GNOME/geocode-glib.git"
+                }
+            ]
+        },
+        {
             "name" : "protobuf",
             "buildsystem" : "autotools",
             "config-opts": [ "DIST_LANG=cpp" ],
