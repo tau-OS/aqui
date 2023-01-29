@@ -300,15 +300,9 @@ public class Aqui.MainWindow : He.ApplicationWindow {
         var we = do_wikipedia_lookup (loc.location.get_description ().split(", ")[0]);
         child.set_wikipedia_entry (we);
 
-        var sw = new Gtk.ScrolledWindow () {
-            hexpand = true,
-            vexpand = true,
-            hscrollbar_policy = Gtk.PolicyType.NEVER
-        };
-        sw.set_child (child);
+        if (bubble.get_first_child() != null) bubble.remove (bubble.get_first_child ());
 
-        bubble.remove (bubble.get_first_child ());
-        bubble.append (sw);
+        bubble.append (child);
         bubble.visible = true;
         child.close_button.clicked.connect (() => {
             bubble.visible = false;
@@ -316,7 +310,7 @@ public class Aqui.MainWindow : He.ApplicationWindow {
     }
 
     public WikipediaEntry? do_wikipedia_lookup (string term) {
-        var uri = "https://en.wikipedia.org/w/api.php?format=json&action=query&prop=extracts&exintro&explaintext&redirects=1&titles=%s".printf(term);
+        var uri = "https://en.wikipedia.org/w/api.php?format=json&action=query&prop=extracts&imageinfo&exintro&explaintext&redirects=1&titles=%s".printf(term);
         var session = new Soup.Session ();
         var message = new Soup.Message ("GET", uri);
         var wikipedia_entry = new WikipediaEntry();
@@ -341,6 +335,27 @@ public class Aqui.MainWindow : He.ApplicationWindow {
             wikipedia_entry.url = "http://en.wikipedia.org/?curid=%ld".printf((long)wikipedia_entry.pageid);
         } catch (Error e) {
             warning(_("Unable to load Wikipedia article for: ") + term);
+        }
+
+        var imguri = "https://en.wikipedia.org/w/api.php?format=json&action=query&prop=pageimages&pithumbsize=250&pilimit=1&titles=%s".printf(term);
+        var imgsession = new Soup.Session ();
+        var imgmessage = new Soup.Message ("GET", imguri);
+
+        try {
+            GLib.Bytes imgbyt = imgsession.send_and_read (imgmessage, null);
+            var imgparser = new Json.Parser();
+            imgparser.load_from_data((string)imgbyt.get_data(), -1);
+            var imgroot_object = imgparser.get_root().get_object();
+            var imgpages = imgroot_object.get_object_member("query").get_object_member("pages");
+            var imgmembers = imgpages.get_members();
+
+            foreach (var imgmember in imgmembers) {
+                var imgelement = imgpages.get_object_member(imgmember);
+                var imgobj = imgelement.get_object_member("thumbnail");
+                wikipedia_entry.pic = imgobj.get_string_member("source");
+            }
+        } catch (Error e) {
+            warning(_("Unable to load Wikipedia article image for: ") + term);
         }
 
         return wikipedia_entry;

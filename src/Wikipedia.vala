@@ -3,6 +3,7 @@ public class WikipediaEntry {
     public string extract = "";
     public int64 pageid = 0;
     public string url = "";
+    public string pic = "";
 
     public WikipediaEntry () {}
 }
@@ -13,6 +14,7 @@ public class Aqui.Wikipedia : Gtk.Box {
     private Gtk.Label title_label;
     private Gtk.Label extract_label;
     private Gtk.LinkButton link_button;
+    private He.ContentBlockImage picture;
 
     public He.DisclosureButton close_button;
 
@@ -24,10 +26,21 @@ public class Aqui.Wikipedia : Gtk.Box {
         this.set_spacing(12);
 
         close_button = new He.DisclosureButton ("window-close-symbolic") {
-            halign = Gtk.Align.END
+            halign = Gtk.Align.END,
+            valign = Gtk.Align.START
         };
         close_button.remove_css_class ("image-button");
         close_button.add_css_class ("small-cb");
+
+        picture = new He.ContentBlockImage ("") {
+            requested_height = 140,
+            requested_width = 300
+        };
+        picture.add_css_class ("pix");
+
+        var picture_overlay = new Gtk.Overlay ();
+        picture_overlay.add_overlay (close_button);
+        picture_overlay.set_child (picture);
 
         title_label = new Gtk.Label("") {
             halign = Gtk.Align.START
@@ -53,14 +66,22 @@ public class Aqui.Wikipedia : Gtk.Box {
             use_markup = true
         };
 
+        var sw = new Gtk.ScrolledWindow () {
+            hexpand = true,
+            vexpand = true,
+            hscrollbar_policy = Gtk.PolicyType.NEVER
+        };
+        sw.set_child (extract_label);
+
         var sep = new Gtk.Separator (Gtk.Orientation.HORIZONTAL);
 
-        this.append(close_button);
+        this.append(picture_overlay);
         this.append(title_box);
-        this.append(extract_label);
+        this.append(sw);
         this.append(sep);
 
         link_button.hide();
+        picture.hide ();
     }
 
     public void set_wikipedia_entry (WikipediaEntry entry) {
@@ -69,12 +90,15 @@ public class Aqui.Wikipedia : Gtk.Box {
             extract_label.set_text (entry.extract.replace("\n", "\n\n"));
             link_button.set_uri(entry.url);
             link_button.show();
+            picture.file = entry.pic;
+            picture.show();
             article_changed(true);
 
         } else {
             extract_label.set_text(NOT_FOUND_SUBT);
             link_button.hide();
             title_label.set_text(NOT_FOUND_TEXT);
+            picture.hide ();
             article_changed(false);
         }
     }
