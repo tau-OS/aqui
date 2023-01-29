@@ -3,6 +3,7 @@ public class Aqui.MainWindow : He.ApplicationWindow {
     private Aqui.LocationMarker point;
     private Gtk.Spinner spinner;
     private Gtk.Box bubble;
+    private Gtk.Entry search_entry;
     private Shumate.SimpleMap smap;
     private Shumate.MarkerLayer poi_layer;
     private Gtk.ListStore location_store;
@@ -49,7 +50,7 @@ public class Aqui.MainWindow : He.ApplicationWindow {
                 license = "© OpenStreetMap",
                 license_uri = "http://www.openstreetmap.org/copyright",
                 min_zoom_level = 2,
-                max_zoom_level = 19,
+                max_zoom_level = 20,
                 tile_size = 256
             };
             var registry = new Shumate.MapSourceRegistry.with_defaults ();
@@ -57,8 +58,9 @@ public class Aqui.MainWindow : He.ApplicationWindow {
 
             smap = new Shumate.SimpleMap () {
                 map_source = renderer,
-                show_zoom_buttons = false
+                show_zoom_buttons = false,
             };
+            smap.get_scale ().visible = false;
 
             poi_layer = new Shumate.MarkerLayer.full (smap.get_map ().get_viewport (), Gtk.SelectionMode.SINGLE);
             smap.get_map ().add_layer (poi_layer);
@@ -83,7 +85,7 @@ public class Aqui.MainWindow : He.ApplicationWindow {
                 halign = Gtk.Align.END,
             };
     
-            var search_entry = new Gtk.Entry () {
+            search_entry = new Gtk.Entry () {
                 placeholder_text = _("Search Location"),
                 tooltip_text = _("Search Location"),
                 primary_icon_name = "system-search-symbolic",
@@ -121,14 +123,28 @@ public class Aqui.MainWindow : He.ApplicationWindow {
                 popover = menu_popover,
                 icon_name = "open-menu-symbolic"
             };
+
+            var fav_menu_popover = new Gtk.Popover () {
+                autohide = true
+            };
+            var fav_menu_popover_grid = new Gtk.Grid () {
+                orientation = Gtk.Orientation.VERTICAL
+            };
+            fav_menu_popover.child = fav_menu_popover_grid;
+
+            var main_fav_button = new Gtk.MenuButton () {
+                popover = fav_menu_popover,
+                icon_name = "emblem-favorite-symbolic"
+            };
     
             var headerbar = new He.AppBar () {
                 show_back = false,
                 show_buttons = true
             };
             headerbar.viewtitle_widget = (search_entry);
-            headerbar.append (menu_button);
             headerbar.append (spinner);
+            headerbar.append (main_fav_button);
+            headerbar.append (menu_button);
             headerbar.add_css_class ("hb");
     
             var headerbar_overlay = new Gtk.Overlay () {
@@ -137,12 +153,12 @@ public class Aqui.MainWindow : He.ApplicationWindow {
             headerbar_overlay.add_overlay (headerbar);
             headerbar_overlay.set_child (headerbar_blur);
 
-            bubble = new Gtk.Box (Gtk.Orientation.VERTICAL, 12) {
+            bubble = new Gtk.Box (Gtk.Orientation.VERTICAL, 6) {
                 visible = false,
                 halign = Gtk.Align.START,
                 valign = Gtk.Align.START,
-                height_request = 455,
-                margin_top = 118,
+                height_request = 440,
+                margin_top = 116,
                 margin_start = 12
             };
             bubble.add_css_class ("bubble");
@@ -160,8 +176,8 @@ public class Aqui.MainWindow : He.ApplicationWindow {
             this.set_child (overlay_button);
 
             set_size_request (360, 360);
-            default_height = 513;
-            default_width = 887;
+            default_height = 600;
+            default_width = 800;
 
             overlay_button.clicked.connect (() => {
                 show_current_location ();
@@ -250,7 +266,7 @@ public class Aqui.MainWindow : He.ApplicationWindow {
         geo_clue.get_current_location.begin ((obj, res) => {
             var location = geo_clue.get_current_location.end (res);
             smap.get_map ().center_on (location.latitude, location.longitude);
-            smap.get_map ().go_to_full (location.latitude, location.longitude, 19);
+            smap.get_map ().go_to_full (location.latitude, location.longitude, 16);
             Spinner.deactivate (spinner);
         });
 
@@ -301,7 +317,7 @@ public class Aqui.MainWindow : He.ApplicationWindow {
         point.latitude = loc.location.latitude;
         point.longitude = loc.location.longitude;
 
-        smap.get_map ().go_to_full (point.latitude, point.longitude, 14);
+        smap.get_map ().go_to_full (point.latitude, point.longitude, 10);
 
         poi_layer.remove_all ();
         poi_layer.add_marker (point);
@@ -321,6 +337,8 @@ public class Aqui.MainWindow : He.ApplicationWindow {
         bubble.visible = true;
         child.close_button.clicked.connect (() => {
             bubble.visible = false;
+            search_entry.text = "";
+            point = null;
         });
     }
 

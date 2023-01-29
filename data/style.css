@@ -10,7 +10,8 @@
 
 .search-entry {
     border-radius: 999px;
-    min-width: 250px;
+    min-width: 210px;
+    margin-right: 12px;
     background: alpha(shade(@view_bg_color, 0.9), 0.8);
 }
 
@@ -19,8 +20,8 @@
 }
 
 .bubble {
-    border-radius: 12px;
-    min-width: 250px;
+    border-radius: 24px;
+    min-width: 240px;
     background: shade(@view_bg_color, 0.98);
     box-shadow: 0 1px 3px 1px alpha(black, 0.15),
                 0 1px 2px 0 alpha(black, 0.3);
@@ -37,11 +38,13 @@
 
 .small-cb {
     background: shade(@view_bg_color, 0.95);
-    margin: 8px;
+    margin: 12px;
     padding: 0 4px;
 }
 .small-cb:hover {
     background: @accent_bg_color;
+    box-shadow: 0 1px 3px 1px alpha(black, 0.15),
+                0 1px 2px 0 alpha(black, 0.3);
 }
 .small-cb:active {
     background: shade(@accent_bg_color, 0.98);
@@ -55,15 +58,25 @@
     font-weight: 700;
     text-decoration: none;
     color: @accent_color;
-    padding: 0 4px;
+    padding: 0;
     background: none;
+    margin: 0 12px;
+}
+
+.txt:hover {
+    box-shadow: 0 1px 3px 1px alpha(black, 0.15),
+                0 1px 2px 0 alpha(black, 0.3);
 }
 
 .pix {
     margin: 0;
-    min-height: 141px;
+    border-radius: 24px 24px 0 0;
 }
 
 .night {
 	filter: brightness(0.7) invert(1) contrast(3) hue-rotate(200deg) saturate(0.2) brightness(0.88);
+}
+
+.pill-button {
+    padding: 8px 8px 8px 16px;
 }
