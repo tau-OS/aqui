@@ -4,12 +4,13 @@ public class Aqui.MainWindow : He.ApplicationWindow {
     private Gtk.Spinner spinner;
     private Gtk.Box bubble;
     private Gtk.Entry search_entry;
-    private Shumate.SimpleMap smap;
     private Shumate.MarkerLayer poi_layer;
     private Gtk.ListStore location_store;
     private GLib.Cancellable search_cancellable;
     private He.Desktop desktop = new He.Desktop ();
 
+    public He.Application app {get; construct;}
+    public Shumate.SimpleMap smap;
     public const string ACTION_PREFIX = "win.";
     public const string ACTION_ABOUT = "about";
     public SimpleActionGroup actions;
@@ -19,6 +20,7 @@ public class Aqui.MainWindow : He.ApplicationWindow {
 
     public MainWindow (He.Application app) {
         Object (
+            app: app,
             application: app,
             title: "Aqui"
         );
@@ -319,6 +321,8 @@ public class Aqui.MainWindow : He.ApplicationWindow {
 
         smap.get_map ().go_to_full (point.latitude, point.longitude, 10);
 
+        Aqui.Application.settings.set ("last-viewed-location", "(dd)", point.latitude, point.longitude);
+
         poi_layer.remove_all ();
         poi_layer.add_marker (point);
 
@@ -338,7 +342,7 @@ public class Aqui.MainWindow : He.ApplicationWindow {
         child.close_button.clicked.connect (() => {
             bubble.visible = false;
             search_entry.text = "";
-            point = null;
+            point.dispose ();
         });
     }
 

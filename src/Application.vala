@@ -21,18 +21,27 @@ public class Aqui.Application : He.Application {
 
         base.startup ();
 
-        new MainWindow (this);
+        var mw = new MainWindow (this);
+
+        settings.bind ("window-height", mw, "default-height", SettingsBindFlags.DEFAULT);
+        settings.bind ("window-width", mw, "default-width", SettingsBindFlags.DEFAULT);
+        if (settings.get_boolean ("maximized")) {
+            mw?.maximize ();
+        }
+        settings.bind ("maximized", mw, "maximized", SettingsBindFlags.SET);
+
+        double lat, lon;
+        settings.get("last-viewed-location", "(dd)", out lat, out lon);
+
+        if (lat >= -85.05112 && lat <= 85.05112 &&
+            lon >= -180 && lon <= 180) {
+                mw?.smap.get_map ().get_viewport ().latitude = lat;
+                mw?.smap.get_map ().get_viewport ().longitude = lon;
+        }
     }
 
     protected override void activate () {
         active_window?.present ();
-
-        settings.bind ("window-height", active_window, "default-height", SettingsBindFlags.DEFAULT);
-        settings.bind ("window-width", active_window, "default-width", SettingsBindFlags.DEFAULT);
-        if (settings.get_boolean ("maximized")) {
-            active_window?.maximize ();
-        }
-        settings.bind ("maximized", active_window, "maximized", SettingsBindFlags.SET);
     }
 
     public static int main (string[] args) {

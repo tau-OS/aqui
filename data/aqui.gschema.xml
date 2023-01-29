@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schemalist>
   <schema path="/com/fyralabs/Aqui/" id="com.fyralabs.Aqui">
-    <key type="ad" name="last-viewed-location">
-      <default>[0.0,0.0]</default>
+    <key type="(dd)" name="last-viewed-location">
+      <default>(0.0,0.0)</default>
       <summary>last viewed location</summary>
       <description>Coordinates of last viewed location.</description>
     </key>   
