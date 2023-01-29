@@ -20,17 +20,18 @@ conf_data.set_quoted('LOCALEDIR', get_option('prefix') / get_option('localedir')
 conf_data.set_quoted('PKGDATADIR', get_option('prefix') / get_option('datadir'))
 conf_data.set_quoted('PROJECT_NAME', meson.project_name())
 config_header = configure_file(
-    input: 'src' / 'config.vala.in',
+    input: 'src/config.vala.in',
     output: 'config.vala',
     configuration: conf_data
 )
 
 sources = files(
-    'src' / 'Application.vala',
-    'src' / 'MainWindow.vala',
-    'src' / 'Spinner.vala',
-    'src' / 'GeoClue.vala',
-    'src' / 'LocationMarker.vala',
+    'src/Application.vala',
+    'src/MainWindow.vala',
+    'src/Spinner.vala',
+    'src/GeoClue.vala',
+    'src/LocationMarker.vala',
+    'src/Wikipedia.vala',
 )
 
 asresources = gnome.compile_resources(
@@ -51,6 +52,8 @@ executable(
         dependency('gtk4'),
         dependency('geocode-glib-2.0'),
         dependency('libgeoclue-2.0'),
+        dependency('libsoup-3.0'),
+        dependency('json-glib-1.0'),
     ],
     install: true
 )

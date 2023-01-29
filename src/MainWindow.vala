@@ -2,6 +2,7 @@ public class Aqui.MainWindow : He.ApplicationWindow {
     private Aqui.GeoClue geo_clue;
     private Aqui.LocationMarker point;
     private Gtk.Spinner spinner;
+    private Gtk.Box bubble;
     private Shumate.SimpleMap smap;
     private Shumate.MarkerLayer poi_layer;
     private Gtk.ListStore location_store;
@@ -120,10 +121,23 @@ public class Aqui.MainWindow : He.ApplicationWindow {
             };
             headerbar_overlay.add_overlay (headerbar);
             headerbar_overlay.set_child (headerbar_blur);
+
+            bubble = new Gtk.Box (Gtk.Orientation.VERTICAL, 12) {
+                visible = false,
+                halign = Gtk.Align.START,
+                valign = Gtk.Align.START,
+                height_request = 455,
+                margin_top = 118,
+                margin_start = 18
+            };
+            bubble.add_css_class ("bubble");
+            var bubble_overlay = new Gtk.Overlay ();
+            bubble_overlay.add_overlay (bubble);
+            bubble_overlay.set_child (smap);
     
             var main_box = new Gtk.Overlay ();
             main_box.add_overlay (headerbar_overlay);
-            main_box.set_child (smap);
+            main_box.set_child (bubble_overlay);
     
             var overlay_button = new He.OverlayButton ("mark-location-symbolic", null, null);
             overlay_button.child = main_box;
@@ -252,9 +266,7 @@ public class Aqui.MainWindow : He.ApplicationWindow {
                 location_store.append (out location);
                 location_store.set (location, 0, place, 1, place.name);
             }
-        } catch (Error error) {
-            warning (error.message);
-        }
+        } catch (Error error) {}
     }
 
     private bool suggestion_selected (Gtk.TreeModel model, Gtk.TreeIter iter) {
@@ -278,5 +290,64 @@ public class Aqui.MainWindow : He.ApplicationWindow {
 
         poi_layer.remove_all ();
         poi_layer.add_marker (point);
+
+        double x, y;
+        Gtk.Allocation map_size;
+        smap.get_map ().get_viewport ().location_to_widget_coords (this, point.latitude, point.longitude, out x, out y);
+        smap.get_map ().get_allocation(out map_size);
+
+        var child = new Aqui.Wikipedia ();
+        var we = do_wikipedia_lookup (loc.location.get_description ().split(", ")[0]);
+        child.set_wikipedia_entry (we);
+        child.article_changed (true);
+
+        var sw = new Gtk.ScrolledWindow ();
+        sw.hexpand = true;
+        sw.vexpand = true;
+        sw.set_child (child);
+
+        bubble.remove (bubble.get_first_child ());
+        bubble.append (sw);
+        bubble.visible = true;
+        child.close_button.clicked.connect (() => {
+            bubble.visible = false;
+        });
+    }
+
+    public static WikipediaEntry? do_wikipedia_lookup (string term) {
+        try {
+            var uri = "https://en.wikipedia.org/w/api.php?format=json&action=query&prop=extracts&exintro&redirects=1&titles=%s".printf(term);
+
+            var session = new Soup.Session ();
+            var message = new Soup.Message ("GET", uri);
+            session.send (message);
+            var wikipedia_entry = new WikipediaEntry();
+
+            session.send_and_read_async.begin (message, 0, null, (obj,res) => {
+                try {
+                    var byt = session.send_and_read_async.end(res);
+
+                    var parser = new Json.Parser();
+                    parser.load_from_data((string)byt.get_data(), -1);
+                    var root_object = parser.get_root().get_object();
+                    var pages = root_object.get_object_member("query").get_object_member("pages");
+                    var members = pages.get_members();
+
+                    foreach (var member in members) {
+                        var element = pages.get_object_member(member);
+                        wikipedia_entry.title = element.get_string_member("title");
+                        wikipedia_entry.extract = element.get_string_member("extract");
+                        wikipedia_entry.pageid = element.get_int_member("pageid");
+                    }
+
+                    wikipedia_entry.url = "http://en.wikipedia.org/?curid=%ld".printf((long)wikipedia_entry.pageid);
+                } catch (Error e) {}
+            });
+
+            return wikipedia_entry;
+        } catch (Error e) {
+            warning(_("Unable to load Wikipedia article for: ") + term);
+            return null;
+        }
     }
 }
