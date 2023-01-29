@@ -300,9 +300,11 @@ public class Aqui.MainWindow : He.ApplicationWindow {
         var we = do_wikipedia_lookup (loc.location.get_description ().split(", ")[0]);
         child.set_wikipedia_entry (we);
 
-        var sw = new Gtk.ScrolledWindow ();
-        sw.hexpand = true;
-        sw.vexpand = true;
+        var sw = new Gtk.ScrolledWindow () {
+            hexpand = true,
+            vexpand = true,
+            hscrollbar_policy = Gtk.PolicyType.NEVER
+        };
         sw.set_child (child);
 
         bubble.remove (bubble.get_first_child ());
@@ -313,41 +315,34 @@ public class Aqui.MainWindow : He.ApplicationWindow {
         });
     }
 
-    public static WikipediaEntry? do_wikipedia_lookup (string term) {
+    public WikipediaEntry? do_wikipedia_lookup (string term) {
+        var uri = "https://en.wikipedia.org/w/api.php?format=json&action=query&prop=extracts&exintro&explaintext&redirects=1&titles=%s".printf(term);
+        var session = new Soup.Session ();
+        var message = new Soup.Message ("GET", uri);
+        var wikipedia_entry = new WikipediaEntry();
+
         try {
-            var uri = "https://en.wikipedia.org/w/api.php?format=json&action=query&prop=extracts&exintro&redirects=1&titles=%s".printf(term);
+            GLib.Bytes byt = session.send_and_read (message, null);
+            var parser = new Json.Parser();
+            parser.load_from_data((string)byt.get_data(), -1);
+            var root_object = parser.get_root().get_object();
+            var pages = root_object.get_object_member("query").get_object_member("pages");
+            var members = pages.get_members();
 
-            var session = new Soup.Session ();
-            var message = new Soup.Message ("GET", uri);
-            session.send (message);
-            var wikipedia_entry = new WikipediaEntry();
-            GLib.Bytes byt = null;
+            foreach (var member in members) {
+                var element = pages.get_object_member(member);
+                wikipedia_entry.title = element.get_string_member("title");
+                wikipedia_entry.extract = element.get_string_member("extract").split (". ")[0] + 
+                                          ". " + element.get_string_member("extract").split (". ")[1] + 
+                                          "."; // We are only interested in a small blurb.
+                wikipedia_entry.pageid = element.get_int_member("pageid");
+            }
 
-            session.send_and_read_async.begin (message, 0, null, (obj,res) => {
-                try {
-                    byt = session.send_and_read_async.end(res);
-
-                    var parser = new Json.Parser();
-                    parser.load_from_data((string)byt.get_data(), -1);
-                    var root_object = parser.get_root().get_object();
-                    var pages = root_object.get_object_member("query").get_object_member("pages");
-                    var members = pages.get_members();
-
-                    foreach (var member in members) {
-                        var element = pages.get_object_member(member);
-                        wikipedia_entry.title = element.get_string_member("title");
-                        wikipedia_entry.extract = element.get_string_member("extract");
-                        wikipedia_entry.pageid = element.get_int_member("pageid");
-                    }
-
-                    wikipedia_entry.url = "http://en.wikipedia.org/?curid=%ld".printf((long)wikipedia_entry.pageid);
-                } catch (Error e) {}
-            });
-
-            return wikipedia_entry;
+            wikipedia_entry.url = "http://en.wikipedia.org/?curid=%ld".printf((long)wikipedia_entry.pageid);
         } catch (Error e) {
             warning(_("Unable to load Wikipedia article for: ") + term);
-            return null;
         }
+
+        return wikipedia_entry;
     }
 }

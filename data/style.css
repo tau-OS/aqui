@@ -50,3 +50,11 @@
     padding: 0;
     margin: 0;
 }
+
+.txt {
+    font-weight: 700;
+    text-decoration: none;
+    color: @accent_color;
+    padding: 0 4px;
+    background: none;
+}

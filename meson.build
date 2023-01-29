@@ -46,7 +46,6 @@ executable(
     sources,
     asresources,
     dependencies: [
-        dependency('gio-2.0'),
         dependency('libhelium-1'),
         dependency('shumate-1.0'),
         dependency('gtk4'),

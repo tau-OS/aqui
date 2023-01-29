@@ -35,8 +35,12 @@ public class Aqui.Wikipedia : Gtk.Box {
         title_label.get_style_context().add_class("wk-title");
 
         link_button = new Gtk.LinkButton.with_label("https://wikipedia.org", "Wikipedia") {
-            halign = Gtk.Align.END
+            halign = Gtk.Align.END,
+            hexpand = true
         };
+        link_button.remove_css_class ("link");
+        link_button.remove_css_class ("text-button");
+        link_button.add_css_class ("txt");
 
         var title_box = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 0);
         title_box.append (title_label);
@@ -44,10 +48,9 @@ public class Aqui.Wikipedia : Gtk.Box {
 
         extract_label = new Gtk.Label("") {
             valign = Gtk.Align.START,
-            max_width_chars = 370,
             wrap = true,
-            justify = Gtk.Justification.FILL,
-            vexpand = true
+            vexpand = true,
+            use_markup = true
         };
 
         var sep = new Gtk.Separator (Gtk.Orientation.HORIZONTAL);
