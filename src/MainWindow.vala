@@ -7,6 +7,7 @@ public class Aqui.MainWindow : He.ApplicationWindow {
     private Shumate.MarkerLayer poi_layer;
     private Gtk.ListStore location_store;
     private GLib.Cancellable search_cancellable;
+    private He.Desktop desktop = new He.Desktop ();
 
     public const string ACTION_PREFIX = "win.";
     public const string ACTION_ABOUT = "about";
@@ -61,6 +62,20 @@ public class Aqui.MainWindow : He.ApplicationWindow {
 
             poi_layer = new Shumate.MarkerLayer.full (smap.get_map ().get_viewport (), Gtk.SelectionMode.SINGLE);
             smap.get_map ().add_layer (poi_layer);
+
+            if (desktop.prefers_color_scheme == He.Desktop.ColorScheme.DARK) {
+                smap.get_map ().add_css_class ("night");
+            } else {
+                smap.get_map ().remove_css_class ("night");
+            }
+
+            desktop.notify["prefers-color-scheme"].connect (() => {
+                if (desktop.prefers_color_scheme == He.Desktop.ColorScheme.DARK) {
+                    smap.get_map ().add_css_class ("night");
+                } else {
+                    smap.get_map ().remove_css_class ("night");
+                }
+            });
 
             spinner = new Gtk.Spinner () {
                 visible = false,
