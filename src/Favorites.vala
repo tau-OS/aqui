@@ -1,14 +1,47 @@
-public class Aqui.FavoriteRow : Gtk.ListBoxRow {
-    public Geocode.Place place {get; construct;}
+public class Aqui.FavoriteItem : Object, Utils.ContentItem {
+    public string place {get; construct;}
 
-    public FavoriteRow (Geocode.Place place) {
+    public string? name {
+        get {
+            return place;
+        }
+        set {}
+    }
+    public FavoriteItem (string place) {
         Object (place: place);
     }
 
-    construct {
-        var lname = place.location.description;
+    public void serialize (GLib.VariantBuilder builder) {
+        builder.open (new GLib.VariantType ("a{sv}"));
+        builder.add ("{sv}", "place", new GLib.Variant.string (place));
+        builder.close ();
+    }
 
-        var loc_label = new Gtk.Label (lname);
+    public static FavoriteItem? deserialize (Variant variant) {
+        string key;
+        Variant val;
+        string? place = null;
+
+        var iter = variant.iterator ();
+        while (iter.next ("{sv}", out key, out val)) {
+            switch (key) {
+                case "place":
+                    place = (string)val;
+                    break;
+            }
+        }
+
+        return new FavoriteItem (place);
+    }
+}
+
+public class Aqui.FavoriteRow : Gtk.ListBoxRow {
+    public FavoriteItem item {get; construct set;}
+
+    public FavoriteRow (FavoriteItem item) {
+        Object (item: item);
+
+        var loc_label = new Gtk.Label (item.place);
         loc_label.halign = Gtk.Align.START;
         loc_label.add_css_class ("cb-title");
 
@@ -22,21 +55,18 @@ public class Aqui.FavoriteRow : Gtk.ListBoxRow {
 
 public class Aqui.Favorites : Gtk.Popover {
     public MainWindow win {get; construct;}
+    public Gtk.ListBox list;
+    public Utils.ContentStore fav_store = new Utils.ContentStore ();
 
     private Shumate.SimpleMap map_view = null;
-
-    public Gtk.ListBox list;
-
     private const int N_VISIBLE = 6;
 
     public Favorites (MainWindow win) {
         Object (win: win);
-    }
 
-    construct {
         this.map_view = win.smap;
         this.has_arrow = false;
-        this.width_request = 320;
+        this.width_request = 300;
 
         var entry = new Gtk.Entry () {
             placeholder_text = _("Search Favorites…"),
@@ -54,17 +84,19 @@ public class Aqui.Favorites : Gtk.Popover {
 
         list = new Gtk.ListBox ();
         list.add_css_class ("content-list");
+        list.bind_model (fav_store, (item) => {
+            var row = new FavoriteRow ((FavoriteItem) item);
+            return row;
+        });
 
-        list.row_activated.connect((row) => {
-            this.hide();
-            map_view.get_map ().go_to_full (((FavoriteRow)row).place.location.latitude, ((FavoriteRow)row).place.location.longitude, 10);
+        fav_store.items_changed.connect ((position, removed, added) => {
+            save ();
         });
-        list.set_filter_func((row) => {
-            return ((FavoriteRow)row).place.location.description == (entry.text);
-        });
+        load ();
 
         var sw = new Gtk.ScrolledWindow () {
             hscrollbar_policy = Gtk.PolicyType.NEVER,
+            height_request = 380,
             hexpand = true,
             vexpand = true
         };
@@ -75,5 +107,13 @@ public class Aqui.Favorites : Gtk.Popover {
         main_box.append (sw);
 
         child = (main_box);
+    }
+
+    public void save () {
+        Aqui.Application.settings.set_value ("favorites", fav_store.serialize ());
+    }
+    public void load () {
+        fav_store.deserialize (Aqui.Application.settings.get_value ("favorites"), FavoriteItem.deserialize);
+        list.queue_draw ();
     }
 }

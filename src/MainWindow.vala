@@ -9,7 +9,7 @@ public class Aqui.MainWindow : He.ApplicationWindow {
     private GLib.Cancellable search_cancellable;
     private He.Desktop desktop = new He.Desktop ();
 
-    public ListStore fav_store = new ListStore (typeof (Geocode.Place));
+    public Aqui.Favorites favorites;
     public He.Application app {get; construct;}
     public Shumate.SimpleMap smap;
     public const string ACTION_PREFIX = "win.";
@@ -128,15 +128,17 @@ public class Aqui.MainWindow : He.ApplicationWindow {
                 icon_name = "open-menu-symbolic"
             };
 
-            var fav_menu_popover = new Favorites (this) {
+            favorites = new Aqui.Favorites (this) {
                 autohide = true
             };
-            fav_menu_popover.list.bind_model (fav_store, (data) => {
-                return new FavoriteRow ((Geocode.Place) data);
+            favorites.list.row_selected.connect ((row) => {
+                select_location.begin (((FavoriteRow)row).item.place, (obj, res) => {
+                    Spinner.deactivate (spinner);
+                });
             });
 
             var main_fav_button = new Gtk.MenuButton () {
-                popover = fav_menu_popover,
+                popover = favorites,
                 icon_name = "emblem-favorite-symbolic"
             };
     
@@ -303,6 +305,22 @@ public class Aqui.MainWindow : He.ApplicationWindow {
         } catch (Error error) {}
     }
 
+    private async void select_location (string loc) {
+        if (search_cancellable != null) {
+            search_cancellable.cancel ();
+        }
+
+        search_cancellable = new GLib.Cancellable ();
+
+        var forward = new Geocode.Forward.for_string (loc) {
+            answer_count = 10
+        };
+        try {
+            var places = yield forward.search_async (search_cancellable);
+            center_map ((Geocode.Place)places.first().data);
+        } catch (Error error) {}
+    }
+
     private bool suggestion_selected (Gtk.TreeModel model, Gtk.TreeIter iter) {
         Value place;
 
@@ -343,11 +361,13 @@ public class Aqui.MainWindow : He.ApplicationWindow {
         child.close_button.clicked.connect (() => {
             bubble.visible = false;
             search_entry.text = "";
-            point.dispose ();
+            point.unparent ();
         });
 
         child.fav_button.clicked.connect (() => {
-            fav_store.insert (0, loc);
+            var item = new FavoriteItem (loc.location.description);
+            favorites.fav_store.add (item);
+            favorites.save ();
         });
     }
 

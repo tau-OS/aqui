@@ -26,5 +26,10 @@
       <summary>Maximized window</summary>
       <description>Whether the window last closed was maximized or not</description>
     </key>
+    <key type="aa{sv}" name="favorites">
+      <default>[]</default>
+      <summary>Favorite locations</summary>
+      <description>List of favorites.</description>
+    </key> 
    </schema>
 </schemalist>

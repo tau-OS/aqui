@@ -23,6 +23,7 @@ public class Aqui.Application : He.Application {
 
         var mw = new MainWindow (this);
 
+        typeof(FavoriteItem).ensure ();
         typeof(FavoriteRow).ensure ();
 
         settings.bind ("window-height", mw, "default-height", SettingsBindFlags.DEFAULT);

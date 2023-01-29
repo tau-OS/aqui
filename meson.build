@@ -33,6 +33,7 @@ sources = files(
     'src/Favorites.vala',
     'src/LocationMarker.vala',
     'src/Wikipedia.vala',
+    'src/Utils.vala',
 )
 
 asresources = gnome.compile_resources(
