@@ -128,7 +128,7 @@ public class Aqui.MainWindow : He.ApplicationWindow {
                 valign = Gtk.Align.START,
                 height_request = 455,
                 margin_top = 118,
-                margin_start = 18
+                margin_start = 12
             };
             bubble.add_css_class ("bubble");
             var bubble_overlay = new Gtk.Overlay ();
@@ -299,7 +299,6 @@ public class Aqui.MainWindow : He.ApplicationWindow {
         var child = new Aqui.Wikipedia ();
         var we = do_wikipedia_lookup (loc.location.get_description ().split(", ")[0]);
         child.set_wikipedia_entry (we);
-        child.article_changed (true);
 
         var sw = new Gtk.ScrolledWindow ();
         sw.hexpand = true;
@@ -322,10 +321,11 @@ public class Aqui.MainWindow : He.ApplicationWindow {
             var message = new Soup.Message ("GET", uri);
             session.send (message);
             var wikipedia_entry = new WikipediaEntry();
+            GLib.Bytes byt = null;
 
             session.send_and_read_async.begin (message, 0, null, (obj,res) => {
                 try {
-                    var byt = session.send_and_read_async.end(res);
+                    byt = session.send_and_read_async.end(res);
 
                     var parser = new Json.Parser();
                     parser.load_from_data((string)byt.get_data(), -1);
