@@ -17,7 +17,7 @@ public class Aqui.Wikipedia : Gtk.Box {
     private He.ContentBlockImage picture;
 
     public He.DisclosureButton close_button;
-    public He.TintButton fav_button;
+    public Gtk.ToggleButton fav_button;
 
     private string NOT_FOUND_TEXT = _("Not Found");
     private string NOT_FOUND_SUBT = _("The specified location was not found, either because network is offline or the place doesn't have a Wikipedia page.");
@@ -76,7 +76,7 @@ public class Aqui.Wikipedia : Gtk.Box {
 
         var sep = new Gtk.Separator (Gtk.Orientation.HORIZONTAL);
 
-        fav_button = new He.TintButton ("") {
+        fav_button = new Gtk.ToggleButton () {
             halign = Gtk.Align.END,
             valign = Gtk.Align.CENTER,
             hexpand = true,
@@ -87,6 +87,7 @@ public class Aqui.Wikipedia : Gtk.Box {
                 icon = "emblem-favorite-symbolic"
             }
         };
+        fav_button.add_css_class ("tint-button");
         fav_button.add_css_class ("pill-button");
 
         this.append(picture_overlay);

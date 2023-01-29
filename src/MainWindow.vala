@@ -364,10 +364,32 @@ public class Aqui.MainWindow : He.ApplicationWindow {
             point.unparent ();
         });
 
-        child.fav_button.clicked.connect (() => {
-            var item = new FavoriteItem (loc.location.description);
-            favorites.fav_store.add (item);
-            favorites.save ();
+        var n = favorites.fav_store.get_n_items ();
+        for (int i = 0; i < n; i++) {
+            var item = (FavoriteItem) favorites.fav_store.get_object (i);
+            if (item.place == loc.location.get_description ().split(", ")[0]) {
+                child.fav_button.active = bubble.visible ? true : false;
+                ((He.ButtonContent)child.fav_button.get_first_child ()).label = (_("Unfavorite"));
+            }
+        }
+
+        child.fav_button.toggled.connect (() => {
+            if (child.fav_button.active) {
+                var item = new FavoriteItem (loc.location.get_description ().split(", ")[0]);
+                favorites.fav_store.add (item);
+                favorites.save ();
+                ((He.ButtonContent)child.fav_button.get_first_child ()).label = (_("Unfavorite"));
+            } else {
+                var nn = favorites.fav_store.get_n_items ();
+                for (int i = 0; i < nn; i++) {
+                    var item = (FavoriteItem) favorites.fav_store.get_object (i);
+                    if (item.place == loc.location.get_description ().split(", ")[0]) {
+                        ((He.ButtonContent)child.fav_button.get_first_child ()).label = (_("Favorite"));
+                        favorites.fav_store.remove (item);
+                    }
+                }
+                favorites.save ();
+            }
         });
     }
 
