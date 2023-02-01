@@ -175,7 +175,9 @@ public class Aqui.MainWindow : He.ApplicationWindow {
             main_box.add_overlay (headerbar_overlay);
             main_box.set_child (bubble_overlay);
     
-            var overlay_button = new He.OverlayButton ("mark-location-symbolic", null, null);
+            var overlay_button = new He.OverlayButton ("mark-location-symbolic", null, null) {
+                typeb = PRIMARY
+            };
             overlay_button.child = main_box;
     
             this.set_child (overlay_button);
