@@ -245,7 +245,7 @@ public class Aqui.MainWindow : He.ApplicationWindow {
             "https://github.com/tau-OS/aqui/issues/new",
             "https://github.com/tau-OS/aqui",
             {translators},
-            {"The tauOS team"},
+            {"Fyra Labs"},
             2023, // Year of first publication.
             He.AboutWindow.Licenses.GPLv3,
             He.Colors.GREEN
