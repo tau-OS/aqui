@@ -1,9 +1,9 @@
 {
     "rename-icon" : "com.fyralabs.Aqui",
     "app-id": "com.fyralabs.Aqui",
-    "runtime" : "co.tauos.Platform",
+    "runtime" : "com.fyralabs.Platform",
     "runtime-version" : "stable",
-    "sdk" : "co.tauos.Sdk",
+    "sdk" : "com.fyralabs.Sdk",
     "command": "com.fyralabs.Aqui",
     "finish-args": [
         "--device=dri",
