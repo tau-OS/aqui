@@ -61,9 +61,8 @@ public class Aqui.MainWindow : He.ApplicationWindow {
 
             smap = new Shumate.SimpleMap () {
                 map_source = renderer,
-                show_zoom_buttons = false,
+                show_zoom_buttons = false
             };
-            smap.get_scale ().visible = false;
 
             poi_layer = new Shumate.MarkerLayer.full (smap.get_map ().get_viewport (), Gtk.SelectionMode.SINGLE);
             smap.get_map ().add_layer (poi_layer);
@@ -161,15 +160,13 @@ public class Aqui.MainWindow : He.ApplicationWindow {
             bubble = new Gtk.Box (Gtk.Orientation.VERTICAL, 6) {
                 visible = false,
                 halign = Gtk.Align.START,
-                valign = Gtk.Align.START,
-                height_request = 440,
-                margin_top = 116,
-                margin_start = 12
+                vexpand = true,
+                hexpand_set = true
             };
-            bubble.add_css_class ("bubble");
-            var bubble_overlay = new Gtk.Overlay ();
-            bubble_overlay.add_overlay (bubble);
-            bubble_overlay.set_child (smap);
+            var bubble_overlay = new Bis.Lapel ();
+            bubble_overlay.lapel = (bubble);
+            bubble_overlay.add_css_class ("bubble");
+            bubble_overlay.set_content (smap);
     
             var main_box = new Gtk.Overlay ();
             main_box.add_overlay (headerbar_overlay);
@@ -352,7 +349,9 @@ public class Aqui.MainWindow : He.ApplicationWindow {
         smap.get_map ().get_viewport ().location_to_widget_coords (this, point.latitude, point.longitude, out x, out y);
         smap.get_map ().get_allocation(out map_size);
 
-        var child = new Aqui.Wikipedia ();
+        var child = new Aqui.Wikipedia () {
+            margin_top = 105
+        };
         var we = do_wikipedia_lookup (loc.location.get_description ().split(", ")[0]);
         child.set_wikipedia_entry (we);
 

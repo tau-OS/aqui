@@ -48,9 +48,10 @@ executable(
     sources,
     asresources,
     dependencies: [
-        dependency('libhelium-1'),
-        dependency('shumate-1.0'),
         dependency('gtk4'),
+        dependency('shumate-1.0'),
+        dependency('libhelium-1'),
+        dependency('libbismuth-1', fallback: [ 'libbismuth', 'libbismuth_dep' ], version: '>=1.0.0'),
         dependency('geocode-glib-2.0'),
         dependency('libgeoclue-2.0'),
         dependency('libsoup-3.0'),
