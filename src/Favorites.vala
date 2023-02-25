@@ -75,7 +75,7 @@ public class Aqui.Favorites : Gtk.Popover {
             valign = Gtk.Align.CENTER,
             halign = Gtk.Align.START
         };
-        entry.add_css_class ("search-entry");
+        entry.add_css_class ("search");
 
         entry.changed.connect(() => list.invalidate_filter());
 

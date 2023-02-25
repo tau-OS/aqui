@@ -8,7 +8,7 @@ public class Aqui.MainWindow : He.ApplicationWindow {
     private Gtk.ListStore location_store;
     private GLib.Cancellable search_cancellable;
     private He.Desktop desktop = new He.Desktop ();
-
+    private He.AppBar headerbar;
     public Aqui.Favorites favorites;
     public He.Application app {get; construct;}
     public Shumate.SimpleMap smap;
@@ -98,13 +98,6 @@ public class Aqui.MainWindow : He.ApplicationWindow {
             search_entry.set_completion (location_completion);
     
             var box = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 0);
-            var headerbar_blur = new He.AppBar () {
-                show_back = false,
-                show_buttons = false,
-                viewtitle_widget = box
-            };
-            headerbar_blur.add_css_class ("hb-blur");
-
             var menu_popover = new Gtk.Popover () {
                 autohide = true,
                 has_arrow = false
@@ -141,21 +134,16 @@ public class Aqui.MainWindow : He.ApplicationWindow {
                 icon_name = "emblem-favorite-symbolic"
             };
     
-            var headerbar = new He.AppBar () {
+            headerbar = new He.AppBar () {
                 show_back = false,
-                show_buttons = true
+                show_buttons = true,
+                valign = Gtk.Align.START
             };
             headerbar.viewtitle_widget = (search_entry);
             headerbar.append (spinner);
             headerbar.append (main_fav_button);
             headerbar.append (menu_button);
             headerbar.add_css_class ("hb");
-    
-            var headerbar_overlay = new Gtk.Overlay () {
-                valign = Gtk.Align.START,
-            };
-            headerbar_overlay.add_overlay (headerbar);
-            headerbar_overlay.set_child (headerbar_blur);
 
             bubble = new Gtk.Box (Gtk.Orientation.VERTICAL, 6) {
                 visible = false,
@@ -163,13 +151,15 @@ public class Aqui.MainWindow : He.ApplicationWindow {
                 vexpand = true,
                 hexpand_set = true
             };
-            var bubble_overlay = new Bis.Lapel ();
+            var bubble_overlay = new Bis.Lapel () {
+                fold_policy = Bis.LapelFoldPolicy.NEVER
+            };
             bubble_overlay.lapel = (bubble);
             bubble_overlay.add_css_class ("bubble");
             bubble_overlay.set_content (smap);
     
             var main_box = new Gtk.Overlay ();
-            main_box.add_overlay (headerbar_overlay);
+            main_box.add_overlay (headerbar);
             main_box.set_child (bubble_overlay);
     
             var overlay_button = new He.OverlayButton ("mark-location-symbolic", null, null) {
@@ -337,6 +327,8 @@ public class Aqui.MainWindow : He.ApplicationWindow {
         point.latitude = loc.location.latitude;
         point.longitude = loc.location.longitude;
 
+        search_entry.visible = false;
+
         smap.get_map ().go_to_full (point.latitude, point.longitude, 10);
 
         Aqui.Application.settings.set ("last-viewed-location", "(dd)", point.latitude, point.longitude);
@@ -349,9 +341,7 @@ public class Aqui.MainWindow : He.ApplicationWindow {
         smap.get_map ().get_viewport ().location_to_widget_coords (this, point.latitude, point.longitude, out x, out y);
         smap.get_map ().get_allocation(out map_size);
 
-        var child = new Aqui.Wikipedia () {
-            margin_top = 105
-        };
+        var child = new Aqui.Wikipedia ();
         var we = do_wikipedia_lookup (loc.location.get_description ().split(", ")[0]);
         child.set_wikipedia_entry (we);
 
@@ -363,6 +353,7 @@ public class Aqui.MainWindow : He.ApplicationWindow {
             bubble.visible = false;
             search_entry.text = "";
             point.unparent ();
+            search_entry.visible = true;
         });
 
         var n = favorites.fav_store.get_n_items ();
