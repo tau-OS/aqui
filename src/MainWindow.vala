@@ -145,6 +145,13 @@ public class Aqui.MainWindow : He.ApplicationWindow {
             headerbar.append (menu_button);
             headerbar.add_css_class ("hb");
 
+            var main_box = new Gtk.Overlay ();
+            main_box.add_overlay (headerbar);
+            main_box.set_child (smap);
+
+            var content_box = new Gtk.Box (Gtk.Orientation.VERTICAL, 0);
+            content_box.append (main_box);
+
             bubble = new Gtk.Box (Gtk.Orientation.VERTICAL, 6) {
                 visible = false,
                 halign = Gtk.Align.START,
@@ -156,16 +163,12 @@ public class Aqui.MainWindow : He.ApplicationWindow {
             };
             bubble_overlay.lapel = (bubble);
             bubble_overlay.add_css_class ("bubble");
-            bubble_overlay.set_content (smap);
-    
-            var main_box = new Gtk.Overlay ();
-            main_box.add_overlay (headerbar);
-            main_box.set_child (bubble_overlay);
+            bubble_overlay.set_content (content_box);
     
             var overlay_button = new He.OverlayButton ("mark-location-symbolic", null, null) {
                 typeb = PRIMARY
             };
-            overlay_button.child = main_box;
+            overlay_button.child = bubble_overlay;
     
             this.set_child (overlay_button);
 
@@ -327,8 +330,6 @@ public class Aqui.MainWindow : He.ApplicationWindow {
         point.latitude = loc.location.latitude;
         point.longitude = loc.location.longitude;
 
-        search_entry.visible = false;
-
         smap.get_map ().go_to_full (point.latitude, point.longitude, 10);
 
         Aqui.Application.settings.set ("last-viewed-location", "(dd)", point.latitude, point.longitude);
@@ -353,7 +354,6 @@ public class Aqui.MainWindow : He.ApplicationWindow {
             bubble.visible = false;
             search_entry.text = "";
             point.unparent ();
-            search_entry.visible = true;
         });
 
         var n = favorites.fav_store.get_n_items ();

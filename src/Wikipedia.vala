@@ -102,14 +102,13 @@ public class Aqui.Wikipedia : Gtk.Box {
 
     public void set_wikipedia_entry (WikipediaEntry entry) {
         title_label.set_text(entry.title);
-        if(entry.extract != null && entry.extract.length > 0) {
+        if(entry.extract != "" && entry.extract.length > 0) {
             extract_label.set_text (entry.extract.replace("\n", "\n\n"));
             link_button.set_uri(entry.url);
             link_button.show();
             picture.file = entry.pic;
             picture.show();
             article_changed(true);
-
         } else {
             extract_label.set_text(NOT_FOUND_SUBT);
             link_button.hide();
