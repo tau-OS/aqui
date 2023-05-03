@@ -237,7 +237,7 @@ public class Aqui.MainWindow : He.ApplicationWindow {
             {translators},
             {"Fyra Labs"},
             2023, // Year of first publication.
-            He.AboutWindow.Licenses.GPLv3,
+            He.AboutWindow.Licenses.GPLV3,
             He.Colors.GREEN
         );
         about.present ();
