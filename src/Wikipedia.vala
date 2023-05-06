@@ -93,8 +93,8 @@ public class Aqui.Wikipedia : Gtk.Box {
         this.append(picture_overlay);
         this.append(title_box);
         this.append(sw);
-        this.append(sep);
-        //this.append(fav_button);
+        // this.append(sep);
+        // this.append(fav_button);
 
         link_button.hide();
         picture.hide ();
