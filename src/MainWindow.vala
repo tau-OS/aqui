@@ -141,7 +141,8 @@ public class Aqui.MainWindow : He.ApplicationWindow {
             };
             headerbar.viewtitle_widget = (search_entry);
             headerbar.append (spinner);
-            headerbar.append (main_fav_button);
+            // TODO: Favourite popup remove favourites.
+            // headerbar.append (main_fav_button);
             headerbar.append (menu_button);
             headerbar.add_css_class ("hb");
 

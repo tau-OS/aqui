@@ -94,7 +94,7 @@ public class Aqui.Wikipedia : Gtk.Box {
         this.append(title_box);
         this.append(sw);
         this.append(sep);
-        this.append(fav_button);
+        //this.append(fav_button);
 
         link_button.hide();
         picture.hide ();
