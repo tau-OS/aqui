@@ -86,7 +86,7 @@ public class Aqui.MainWindow : He.ApplicationWindow {
                 valign = Gtk.Align.CENTER,
                 halign = Gtk.Align.END,
             };
-    
+
             search_entry = new Gtk.Entry () {
                 placeholder_text = _("Search Locations…"),
                 tooltip_text = _("Search Locations…"),
@@ -96,7 +96,7 @@ public class Aqui.MainWindow : He.ApplicationWindow {
             };
             search_entry.add_css_class ("search-entry");
             search_entry.set_completion (location_completion);
-    
+
             var box = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 0);
             var menu_popover = new Gtk.Popover () {
                 autohide = true,
@@ -133,10 +133,10 @@ public class Aqui.MainWindow : He.ApplicationWindow {
                 popover = favorites,
                 icon_name = "emblem-favorite-symbolic"
             };
-    
+
             headerbar = new He.AppBar () {
                 show_back = false,
-                show_buttons = true,
+                show_right_title_buttons = true,
                 valign = Gtk.Align.START
             };
             headerbar.viewtitle_widget = (search_entry);
@@ -165,12 +165,12 @@ public class Aqui.MainWindow : He.ApplicationWindow {
             bubble_overlay.lapel = (bubble);
             bubble_overlay.add_css_class ("bubble");
             bubble_overlay.set_content (content_box);
-    
+
             var overlay_button = new He.OverlayButton ("mark-location-symbolic", null, null) {
                 typeb = PRIMARY
             };
             overlay_button.child = bubble_overlay;
-    
+
             this.set_child (overlay_button);
 
             set_size_request (360, 360);
@@ -218,7 +218,7 @@ public class Aqui.MainWindow : He.ApplicationWindow {
             });
             ((Gtk.Widget)this).add_controller (event_controller_key);
         } catch (Error e) {
-            
+
         }
     }
 
@@ -403,8 +403,8 @@ public class Aqui.MainWindow : He.ApplicationWindow {
             foreach (var member in members) {
                 var element = pages.get_object_member(member);
                 wikipedia_entry.title = element.get_string_member("title");
-                wikipedia_entry.extract = element.get_string_member("extract").split (". ")[0] + 
-                                          ". " + element.get_string_member("extract").split (". ")[1] + 
+                wikipedia_entry.extract = element.get_string_member("extract").split (". ")[0] +
+                                          ". " + element.get_string_member("extract").split (". ")[1] +
                                           "."; // We are only interested in a small blurb.
                 wikipedia_entry.pageid = element.get_int_member("pageid");
             }
