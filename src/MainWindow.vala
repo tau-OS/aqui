@@ -61,7 +61,8 @@ public class Aqui.MainWindow : He.ApplicationWindow {
 
             smap = new Shumate.SimpleMap () {
                 map_source = renderer,
-                show_zoom_buttons = false
+                show_zoom_buttons = false,
+                vexpand = true
             };
 
             poi_layer = new Shumate.MarkerLayer.full (smap.get_map ().get_viewport (), Gtk.SelectionMode.SINGLE);
@@ -113,6 +114,7 @@ public class Aqui.MainWindow : He.ApplicationWindow {
                 orientation = Gtk.Orientation.VERTICAL
             };
             menu_popover_grid.attach (about_menu_item, 0, 0, 1, 1);
+            menu_popover.has_arrow = false;
             menu_popover.child = menu_popover_grid;
 
             var menu_button = new Gtk.MenuButton () {
@@ -246,7 +248,9 @@ public class Aqui.MainWindow : He.ApplicationWindow {
 
     private Gtk.Button create_button_menu_item (string label, string? action_name) {
         var labelb = new Gtk.Label (label) {
-            xalign = 0
+            xalign = 0,
+            halign = Gtk.Align.START,
+            hexpand = true
         };
         var button = new Gtk.Button () {
             child = labelb,

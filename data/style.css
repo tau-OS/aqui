@@ -24,7 +24,20 @@
 }
 
 .menu-button {
-    border-radius: 8px;
+    margin: 8px 0;
+    padding: 0 12px;
+    min-height: 48px;
+    border-radius: 0;
+    background: none;
+}
+.menu-button label {
+    font-weight: 500;
+}
+.menu-button:hover {
+    background: @accent_bg_color;
+}
+.menu-button:active {
+    background: shade(@accent_bg_color, 0.98);
 }
 
 .bubble > box {
