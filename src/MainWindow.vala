@@ -95,6 +95,7 @@ public class Aqui.MainWindow : He.ApplicationWindow {
                 valign = Gtk.Align.CENTER,
                 halign = Gtk.Align.START
             };
+            search_entry.add_css_class ("text-field");
             search_entry.add_css_class ("search-entry");
             search_entry.set_completion (location_completion);
 
