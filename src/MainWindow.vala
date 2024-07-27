@@ -146,7 +146,7 @@ public class Aqui.MainWindow : He.ApplicationWindow {
             headerbar.append (spinner);
             // TODO: Favourite popup remove favourites.
             // headerbar.append (main_fav_button);
-            headerbar.append (menu_button);
+            headerbar.append_menu (menu_button);
             headerbar.add_css_class ("hb");
 
             var main_box = new Gtk.Overlay ();
@@ -176,7 +176,7 @@ public class Aqui.MainWindow : He.ApplicationWindow {
 
             this.set_child (overlay_button);
 
-            set_size_request (360, 360);
+            set_size_request (360, 294);
             default_height = 600;
             default_width = 800;
 
