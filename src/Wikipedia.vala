@@ -16,7 +16,7 @@ public class Aqui.Wikipedia : Gtk.Box {
     private Gtk.LinkButton link_button;
     private He.ContentBlockImage picture;
 
-    public He.DisclosureButton close_button;
+    public He.Button close_button;
     public Gtk.ToggleButton fav_button;
 
     private string NOT_FOUND_TEXT = _("Not Found");
@@ -26,11 +26,10 @@ public class Aqui.Wikipedia : Gtk.Box {
         this.set_orientation(Gtk.Orientation.VERTICAL);
         this.set_spacing(12);
 
-        close_button = new He.DisclosureButton ("window-close-symbolic") {
+        close_button = new He.Button ("window-close-symbolic", null) {
             halign = Gtk.Align.END,
             valign = Gtk.Align.START
         };
-        close_button.remove_css_class ("image-button");
         close_button.add_css_class ("small-cb");
 
         picture = new He.ContentBlockImage ("") {
