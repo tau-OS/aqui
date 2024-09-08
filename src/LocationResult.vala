@@ -17,6 +17,7 @@ public class LocationResult : He.Bin {
         var place_name = new Gtk.Label (place.name) {
             xalign = 0,
             wrap = true,
+            hexpand = true,
             wrap_mode = Pango.WrapMode.WORD_CHAR
         };
         place_name.add_css_class ("cb-title");
@@ -24,6 +25,7 @@ public class LocationResult : He.Bin {
         var place_location = new Gtk.Label (place.country ?? "") {
             xalign = 0,
             wrap = true,
+            hexpand = true,
             wrap_mode = Pango.WrapMode.WORD_CHAR
         };
         place_location.add_css_class ("cb-subtitle");

@@ -100,6 +100,7 @@ public class Aqui.MainWindow : He.ApplicationWindow {
 
             var search_results_scrolled = new Gtk.ScrolledWindow () {
                 child = search_results,
+                margin_top = margin_bottom = margin_start = margin_end = 8,
                 height_request = 300,
                 width_request = 300
             };
@@ -206,7 +207,6 @@ public class Aqui.MainWindow : He.ApplicationWindow {
 
             bubble = new Gtk.Box (Gtk.Orientation.VERTICAL, 6) {
                 visible = false,
-                halign = Gtk.Align.START,
                 vexpand = true,
                 hexpand_set = true
             };
@@ -479,8 +479,8 @@ public class Aqui.MainWindow : He.ApplicationWindow {
                 var element = pages.get_object_member(member);
                 wikipedia_entry.title = element.get_string_member("title");
                 wikipedia_entry.extract = element.get_string_member("extract").split (". ")[0] +
-                                          ". " + element.get_string_member("extract").split (". ")[1] +
-                                          "."; // We are only interested in a small blurb.
+                                            ". " + element.get_string_member("extract").split (". ")[1] +
+                                            "."; // We are only interested in a small blurb.
                 wikipedia_entry.pageid = element.get_int_member("pageid");
             }
 
