@@ -1,17 +1,23 @@
 public class Aqui.MainWindow : He.ApplicationWindow {
     private Aqui.GeoClue geo_clue;
     private Aqui.LocationMarker point;
-    private Gtk.Spinner spinner;
+    private GLib.Cancellable search_cancellable;
     private Gtk.Box bubble;
     private Gtk.Entry search_entry;
-    private Shumate.MarkerLayer poi_layer;
-    private Gtk.ListStore location_store;
-    private GLib.Cancellable search_cancellable;
-    private He.Desktop desktop = new He.Desktop ();
+    private Gtk.ListBox search_results;
+    private Gtk.Popover search_popover;
+    private Gtk.Spinner spinner;
     private He.AppBar headerbar;
+    private He.Desktop desktop = new He.Desktop ();
+    private Shumate.MarkerLayer poi_layer;
+
+    private bool result_just_selected = false;
+    private uint search_timeout_id = 0;
+
     public Aqui.Favorites favorites;
     public He.Application app {get; construct;}
     public Shumate.SimpleMap smap;
+
     public const string ACTION_PREFIX = "win.";
     public const string ACTION_ABOUT = "about";
     public SimpleActionGroup actions;
@@ -33,18 +39,6 @@ public class Aqui.MainWindow : He.ApplicationWindow {
 
     construct {
         geo_clue = new Aqui.GeoClue ();
-        location_store = new Gtk.ListStore (2, typeof (Geocode.Place), typeof (string));
-
-        var location_completion = new Gtk.EntryCompletion () {
-            minimum_key_length = 3,
-            model = location_store,
-            text_column = 1
-        };
-
-        location_completion.set_match_func ((completion, key, iter) => {
-            return true;
-        });
-        location_completion.match_selected.connect ((model, iter) => suggestion_selected (model, iter));
 
         try {
             var renderer = new Shumate.RasterRenderer.from_url ("https://tile.openstreetmap.org/{z}/{x}/{y}.png") {
@@ -97,7 +91,61 @@ public class Aqui.MainWindow : He.ApplicationWindow {
             };
             search_entry.add_css_class ("text-field");
             search_entry.add_css_class ("search-entry");
-            search_entry.set_completion (location_completion);
+
+            search_results = new Gtk.ListBox () {
+                selection_mode = Gtk.SelectionMode.SINGLE,
+                visible = false
+            };
+            search_results.add_css_class ("content-listbox");
+
+            var search_results_scrolled = new Gtk.ScrolledWindow () {
+                child = search_results,
+                height_request = 300,
+                width_request = 300
+            };
+
+            search_popover = new Gtk.Popover () {
+                child = search_results_scrolled,
+                has_arrow = false,
+                autohide = false,
+                position = Gtk.PositionType.BOTTOM
+            };
+
+            search_entry.changed.connect (() => {
+                if (result_just_selected) {
+                    result_just_selected = false;
+                    return;
+                }
+
+                if (search_timeout_id != 0) {
+                    GLib.Source.remove (search_timeout_id);
+                }
+
+                if (search_entry.text == "") {
+                    search_popover.popdown ();
+                    return;
+                }
+
+                search_timeout_id = GLib.Timeout.add (300, () => {
+                    Spinner.activate (spinner, _("Searching locations…"));
+                    compute_location.begin (search_entry.text, (obj, res) => {
+                        Spinner.deactivate (spinner);
+                    });
+                    search_timeout_id = 0;
+                    return GLib.Source.REMOVE;
+                });
+            });
+
+            var focus_controller = new Gtk.EventControllerFocus ();
+            focus_controller.enter.connect (() => {
+                if (!result_just_selected && search_results.get_first_child () != null) {
+                    search_popover.popup ();
+                }
+            });
+            search_entry.add_controller (focus_controller);
+
+            search_results.row_activated.connect (on_search_result_selected);
+            search_popover.set_parent (search_entry);
 
             var box = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 0);
             var menu_popover = new Gtk.Popover () {
@@ -105,9 +153,9 @@ public class Aqui.MainWindow : He.ApplicationWindow {
                 has_arrow = false
             };
             var about_menu_item = create_button_menu_item (
-                                                           _("About Aqui…"),
-                                                           "win.about"
-                                                          );
+                _("About Aqui…"),
+                "win.about"
+            );
             about_menu_item.clicked.connect (() => {
                 menu_popover.popdown ();
             });
@@ -123,19 +171,19 @@ public class Aqui.MainWindow : He.ApplicationWindow {
                 icon_name = "open-menu-symbolic"
             };
 
-            favorites = new Aqui.Favorites (this) {
-                autohide = true
-            };
-            favorites.list.row_selected.connect ((row) => {
-                select_location.begin (((FavoriteRow)row).item.place, (obj, res) => {
-                    Spinner.deactivate (spinner);
-                });
-            });
+            //  favorites = new Aqui.Favorites (this) {
+            //      autohide = true
+            //  };
+            //  favorites.list.row_selected.connect ((row) => {
+            //      select_location.begin (((FavoriteRow)row).item.place, (obj, res) => {
+            //          Spinner.deactivate (spinner);
+            //      });
+            //  });
 
-            var main_fav_button = new Gtk.MenuButton () {
-                popover = favorites,
-                icon_name = "emblem-favorite-symbolic"
-            };
+            //  var main_fav_button = new Gtk.MenuButton () {
+            //      popover = favorites,
+            //      icon_name = "emblem-favorite-symbolic"
+            //  };
 
             headerbar = new He.AppBar () {
                 show_back = false,
@@ -291,44 +339,64 @@ public class Aqui.MainWindow : He.ApplicationWindow {
         };
         try {
             var places = yield forward.search_async (search_cancellable);
-            if (places != null) {
-                location_store.clear ();
+
+            // Remove existing children
+            while (search_results.get_first_child () != null) {
+                search_results.remove (search_results.get_first_child ());
             }
 
-            Gtk.TreeIter location;
-            foreach (unowned var place in places) {
-                location_store.append (out location);
-                location_store.set (location, 0, place, 1, place.name);
+            if (places != null && places.length () > 0) {
+                foreach (unowned var place in places) {
+                    var result_widget = new LocationResult (place);
+                    search_results.append (result_widget);
+                }
+                search_results.visible = true;
+                search_popover.popup ();
+            } else {
+                search_results.visible = false;
+                search_popover.popdown ();
             }
-        } catch (Error error) {}
+        } catch (Error error) {
+            warning ("Error searching for location: %s", error.message);
+        }
     }
 
-    private async void select_location (string loc) {
-        if (search_cancellable != null) {
-            search_cancellable.cancel ();
+    private void on_search_result_selected (Gtk.ListBoxRow row) {
+        if (row == null) {
+            warning("Selected row is null");
+            return;
         }
 
-        search_cancellable = new GLib.Cancellable ();
+        var result_widget = row.get_child() as LocationResult;
+        if (result_widget == null) {
+            warning("Selected row does not contain a LocationResult");
+            return;
+        }
 
-        var forward = new Geocode.Forward.for_string (loc) {
-            answer_count = 10
-        };
-        try {
-            var places = yield forward.search_async (search_cancellable);
-            center_map ((Geocode.Place)places.first().data);
-        } catch (Error error) {}
-    }
+        var place = result_widget.place;
+        if (place == null) {
+            warning("LocationResult does not contain a valid place");
+            return;
+        }
 
-    private bool suggestion_selected (Gtk.TreeModel model, Gtk.TreeIter iter) {
-        Value place;
+        result_just_selected = true;
+        center_map(place);
+        search_popover.popdown();
+        search_entry.text = place.name ?? "";
 
-        model.get_value (iter, 0, out place);
-        center_map ((Geocode.Place)place);
-
-        return false;
+        GLib.Timeout.add(400, () => {
+            search_entry.text = "";
+            result_just_selected = false;
+            return GLib.Source.REMOVE;
+        });
     }
 
     private void center_map (Geocode.Place loc) {
+        if (loc == null || loc.location == null) {
+            warning("Invalid place or location");
+            return;
+        }
+
         if (point == null) {
             point = new Aqui.LocationMarker ();
         }
@@ -343,10 +411,12 @@ public class Aqui.MainWindow : He.ApplicationWindow {
         poi_layer.remove_all ();
         poi_layer.add_marker (point);
 
+        search_popover.popdown ();
+
         double x, y;
-        Gtk.Allocation map_size;
+        //Gtk.Allocation map_size;
         smap.get_map ().get_viewport ().location_to_widget_coords (this, point.latitude, point.longitude, out x, out y);
-        smap.get_map ().get_allocation(out map_size);
+        //smap.get_map ().get_allocation(out map_size);
 
         var child = new Aqui.Wikipedia ();
         var we = do_wikipedia_lookup (loc.location.get_description ().split(", ")[0]);
@@ -362,33 +432,33 @@ public class Aqui.MainWindow : He.ApplicationWindow {
             point.unparent ();
         });
 
-        var n = favorites.fav_store.get_n_items ();
-        for (int i = 0; i < n; i++) {
-            var item = (FavoriteItem) favorites.fav_store.get_object (i);
-            if (item.place == loc.location.get_description ().split(", ")[0]) {
-                child.fav_button.active = bubble.visible ? true : false;
-                ((He.ButtonContent)child.fav_button.get_first_child ()).label = (_("Unfavorite"));
-            }
-        }
+        //  var n = favorites.fav_store.get_n_items ();
+        //  for (int i = 0; i < n; i++) {
+        //      var item = (FavoriteItem) favorites.fav_store.get_object (i);
+        //      if (item.place == loc.location.get_description ().split(", ")[0]) {
+        //          child.fav_button.active = bubble.visible ? true : false;
+        //          ((He.ButtonContent)child.fav_button.get_first_child ()).label = (_("Unfavorite"));
+        //      }
+        //  }
 
-        child.fav_button.toggled.connect (() => {
-            if (child.fav_button.active) {
-                var item = new FavoriteItem (loc.location.get_description ().split(", ")[0]);
-                favorites.fav_store.add (item);
-                favorites.save ();
-                ((He.ButtonContent)child.fav_button.get_first_child ()).label = (_("Unfavorite"));
-            } else {
-                var nn = favorites.fav_store.get_n_items ();
-                for (int i = 0; i < nn; i++) {
-                    var item = (FavoriteItem) favorites.fav_store.get_object (i);
-                    if (item.place == loc.location.get_description ().split(", ")[0]) {
-                        ((He.ButtonContent)child.fav_button.get_first_child ()).label = (_("Favorite"));
-                        favorites.fav_store.remove (item);
-                    }
-                }
-                favorites.save ();
-            }
-        });
+        //  child.fav_button.toggled.connect (() => {
+        //      if (child.fav_button.active) {
+        //          var item = new FavoriteItem (loc.location.get_description ().split(", ")[0]);
+        //          favorites.fav_store.add (item);
+        //          favorites.save ();
+        //          ((He.ButtonContent)child.fav_button.get_first_child ()).label = (_("Unfavorite"));
+        //      } else {
+        //          var nn = favorites.fav_store.get_n_items ();
+        //          for (int i = 0; i < nn; i++) {
+        //              var item = (FavoriteItem) favorites.fav_store.get_object (i);
+        //              if (item.place == loc.location.get_description ().split(", ")[0]) {
+        //                  ((He.ButtonContent)child.fav_button.get_first_child ()).label = (_("Favorite"));
+        //                  favorites.fav_store.remove (item);
+        //              }
+        //          }
+        //          favorites.save ();
+        //      }
+        //  });
     }
 
     public WikipediaEntry? do_wikipedia_lookup (string term) {

@@ -58,19 +58,10 @@
 
 .small-cb {
     background: @view_bg_color;
-    margin: 12px;
-    padding: 0 4px;
-}
-.small-cb:hover {
-    background: @accent_bg_color;
-    box-shadow: 0 1px 3px 1px alpha(black, 0.15),
-                0 1px 2px 0 alpha(black, 0.3);
-}
-.small-cb:active {
-    background: shade(@accent_bg_color, 0.98);
+    padding: 0;
 }
 .small-cb image {
-    padding: 0;
+    padding: 6px;
     margin: 0;
 }
 
@@ -94,7 +85,7 @@
 }
 
 .night {
-	filter: brightness(0.7) invert(1) contrast(3) hue-rotate(200deg) saturate(0.2) brightness(0.88);
+	filter: brightness(0.7) invert(1) contrast(2) hue-rotate(200deg) saturate(0.2);
 }
 
 .pill-button {
