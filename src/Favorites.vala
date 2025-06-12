@@ -1,5 +1,5 @@
 public class Aqui.FavoriteItem : Object, Utils.ContentItem {
-    public string place {get; construct;}
+    public string place { get; construct; }
 
     public string? name {
         get {
@@ -17,7 +17,7 @@ public class Aqui.FavoriteItem : Object, Utils.ContentItem {
         builder.close ();
     }
 
-    public static FavoriteItem? deserialize (Variant variant) {
+    public static FavoriteItem ? deserialize (Variant variant) {
         string key;
         Variant val;
         string? place = null;
@@ -25,9 +25,9 @@ public class Aqui.FavoriteItem : Object, Utils.ContentItem {
         var iter = variant.iterator ();
         while (iter.next ("{sv}", out key, out val)) {
             switch (key) {
-                case "place":
-                    place = (string)val;
-                    break;
+            case "place" :
+                place = (string) val;
+                break;
             }
         }
 
@@ -36,25 +36,20 @@ public class Aqui.FavoriteItem : Object, Utils.ContentItem {
 }
 
 public class Aqui.FavoriteRow : Gtk.ListBoxRow {
-    public FavoriteItem item {get; construct set;}
+    public FavoriteItem item { get; construct set; }
 
     public FavoriteRow (FavoriteItem item) {
         Object (item: item);
 
-        var loc_label = new Gtk.Label (item.place);
-        loc_label.halign = Gtk.Align.START;
-        loc_label.add_css_class ("cb-title");
-
-        var main_box = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 0);
-        main_box.add_css_class ("mini-content-block");
-        main_box.append (loc_label);
+        var main_box = new He.MiniContentBlock ();
+        main_box.title = item.place;
 
         this.set_child (main_box);
     }
 }
 
 public class Aqui.Favorites : Gtk.Popover {
-    public MainWindow win {get; construct;}
+    public MainWindow win { get; construct; }
     public Gtk.ListBox list;
     public Utils.ContentStore fav_store = new Utils.ContentStore ();
 
@@ -68,16 +63,16 @@ public class Aqui.Favorites : Gtk.Popover {
         this.has_arrow = false;
         this.width_request = 300;
 
-        var entry = new Gtk.Entry () {
+        var entry = new He.TextField () {
             placeholder_text = _("Search Favorites…"),
             tooltip_text = _("Search Favorites…"),
-            primary_icon_name = "system-search-symbolic",
+            prefix_icon = "system-search-symbolic",
             valign = Gtk.Align.CENTER,
-            halign = Gtk.Align.START
+            hexpand = true,
+            is_search = true,
+            is_outline = true
         };
-        entry.add_css_class ("search");
-
-        entry.changed.connect(() => list.invalidate_filter());
+        entry.get_internal_entry ().changed.connect (() => list.invalidate_filter ());
 
         var entry_box = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 0);
         entry_box.append (entry);
@@ -103,6 +98,10 @@ public class Aqui.Favorites : Gtk.Popover {
         sw.set_child (list);
 
         var main_box = new Gtk.Box (Gtk.Orientation.VERTICAL, 12);
+        main_box.margin_start = 4;
+        main_box.margin_end = 4;
+        main_box.margin_top = 8;
+        main_box.margin_bottom = 8;
         main_box.append (entry_box);
         main_box.append (sw);
 
@@ -112,6 +111,7 @@ public class Aqui.Favorites : Gtk.Popover {
     public void save () {
         Aqui.Application.settings.set_value ("favorites", fav_store.serialize ());
     }
+
     public void load () {
         fav_store.deserialize (Aqui.Application.settings.get_value ("favorites"), FavoriteItem.deserialize);
         list.queue_draw ();

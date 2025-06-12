@@ -17,21 +17,21 @@ public class Aqui.Wikipedia : Gtk.Box {
     private He.ContentBlockImage picture;
 
     public He.Button close_button;
-    // public Gtk.ToggleButton fav_button;
+    public He.Button fav_button;
 
     private string NOT_FOUND_TEXT = _("Not Found");
     private string NOT_FOUND_SUBT = _("The specified location was not found, either because network is offline or the place doesn't have a Wikipedia page.");
 
     public Wikipedia () {
-        this.set_orientation(Gtk.Orientation.VERTICAL);
-        this.set_spacing(12);
+        this.set_orientation (Gtk.Orientation.VERTICAL);
+        this.set_spacing (12);
 
         close_button = new He.Button ("window-close-symbolic", "") {
             halign = Gtk.Align.END,
             valign = Gtk.Align.START,
             is_disclosure = true,
             margin_top = 6,
-            margin_end= 6
+            margin_end = 6
         };
         close_button.add_css_class ("small-cb");
 
@@ -45,12 +45,12 @@ public class Aqui.Wikipedia : Gtk.Box {
         picture_overlay.add_overlay (close_button);
         picture_overlay.set_child (picture);
 
-        title_label = new Gtk.Label("") {
+        title_label = new Gtk.Label ("") {
             halign = Gtk.Align.START
         };
-        title_label.add_css_class("wk-title");
+        title_label.add_css_class ("wk-title");
 
-        link_button = new Gtk.LinkButton.with_label("https://wikipedia.org", "Wikipedia") {
+        link_button = new Gtk.LinkButton.with_label ("https://wikipedia.org", "Wikipedia") {
             halign = Gtk.Align.END,
             hexpand = true
         };
@@ -62,7 +62,7 @@ public class Aqui.Wikipedia : Gtk.Box {
         title_box.append (title_label);
         title_box.append (link_button);
 
-        extract_label = new Gtk.Label("") {
+        extract_label = new Gtk.Label ("") {
             valign = Gtk.Align.START,
             wrap = true,
             vexpand = true,
@@ -76,51 +76,53 @@ public class Aqui.Wikipedia : Gtk.Box {
         };
         sw.set_child (extract_label);
 
-        //var sep = new Gtk.Separator (Gtk.Orientation.HORIZONTAL);
+        var sep = new Gtk.Separator (Gtk.Orientation.HORIZONTAL);
 
-        //  fav_button = new Gtk.ToggleButton () {
-        //      halign = Gtk.Align.END,
-        //      valign = Gtk.Align.CENTER,
-        //      hexpand = true,
-        //      margin_end = 12,
-        //      margin_bottom = 12,
-        //      child = new He.ButtonContent () {
-        //          label = (_("Favorite")),
-        //          icon = "emblem-favorite-symbolic"
-        //      }
-        //  };
-        //  fav_button.add_css_class ("tint-button");
-        //  fav_button.add_css_class ("pill-button");
+        fav_button = new He.Button ("", "") {
+            halign = Gtk.Align.END,
+            valign = Gtk.Align.CENTER,
+            hexpand = true,
+            toggle_mode = true,
+            is_tint = true,
+            is_pill = true,
+            margin_end = 12,
+            margin_bottom = 12,
+            child = new He.ButtonContent () {
+                label = (_("Favorite")),
+                icon = "emblem-favorite-symbolic"
+            }
+        };
 
-        this.append(picture_overlay);
-        this.append(title_box);
-        this.append(sw);
-        // this.append(sep);
-        // this.append(fav_button);
+        this.append (picture_overlay);
 
-        link_button.hide();
+        this.append (title_box);
+        this.append (sw);
+        this.append (sep);
+        this.append (fav_button);
+
+        link_button.hide ();
         picture.hide ();
     }
 
     public void set_wikipedia_entry (WikipediaEntry entry) {
-        title_label.set_text(entry.title);
-        if(entry.extract != "" && entry.extract.length > 0) {
-            extract_label.set_text (entry.extract.replace("\n", "\n\n"));
-            link_button.set_uri(entry.url);
-            link_button.show();
+        title_label.set_text (entry.title);
+        if (entry.extract != "" && entry.extract.length > 0) {
+            extract_label.set_text (entry.extract.replace ("\n", "\n\n"));
+            link_button.set_uri (entry.url);
+            link_button.show ();
             picture.file = entry.pic;
-            picture.show();
-            article_changed(true);
+            picture.show ();
+            article_changed (true);
         } else {
-            extract_label.set_text(NOT_FOUND_SUBT);
-            link_button.hide();
-            title_label.set_text(NOT_FOUND_TEXT);
+            extract_label.set_text (NOT_FOUND_SUBT);
+            link_button.hide ();
+            title_label.set_text (NOT_FOUND_TEXT);
             picture.hide ();
-            article_changed(false);
+            article_changed (false);
         }
     }
 
-    public string get_link() {
-        return link_button.get_uri();
+    public string get_link () {
+        return link_button.get_uri ();
     }
 }

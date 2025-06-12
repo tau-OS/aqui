@@ -7,6 +7,7 @@ public class Aqui.MainWindow : He.ApplicationWindow {
     private Gtk.ListBox search_results;
     private Gtk.Popover search_popover;
     private Gtk.Spinner spinner;
+    private Gtk.Overlay main_overlay;
     private He.AppBar headerbar;
     private He.Desktop desktop = new He.Desktop ();
     private Shumate.MarkerLayer poi_layer;
@@ -15,21 +16,21 @@ public class Aqui.MainWindow : He.ApplicationWindow {
     private uint search_timeout_id = 0;
 
     public Aqui.Favorites favorites;
-    public He.Application app {get; construct;}
+    public He.Application app { get; construct; }
     public Shumate.SimpleMap smap;
 
     public const string ACTION_PREFIX = "win.";
     public const string ACTION_ABOUT = "about";
     public SimpleActionGroup actions;
     private const GLib.ActionEntry[] ACTION_ENTRIES = {
-        {ACTION_ABOUT, action_about },
+        { ACTION_ABOUT, action_about },
     };
 
     public MainWindow (He.Application app) {
         Object (
-            app: app,
-            application: app,
-            title: "Aqui"
+                app: app,
+                application: app,
+                title: "Aqui"
         );
 
         actions = new SimpleActionGroup ();
@@ -90,7 +91,7 @@ public class Aqui.MainWindow : He.ApplicationWindow {
                 halign = Gtk.Align.START
             };
             search_entry.add_css_class ("text-field");
-            search_entry.add_css_class ("search-entry");
+            search_entry.add_css_class ("search");
 
             search_results = new Gtk.ListBox () {
                 selection_mode = Gtk.SelectionMode.SINGLE,
@@ -154,8 +155,8 @@ public class Aqui.MainWindow : He.ApplicationWindow {
                 has_arrow = false
             };
             var about_menu_item = create_button_menu_item (
-                _("About Aqui…"),
-                "win.about"
+                                                           _("About Aqui…"),
+                                                           "win.about"
             );
             about_menu_item.clicked.connect (() => {
                 menu_popover.popdown ();
@@ -172,19 +173,29 @@ public class Aqui.MainWindow : He.ApplicationWindow {
                 icon_name = "open-menu-symbolic"
             };
 
-            //  favorites = new Aqui.Favorites (this) {
-            //      autohide = true
-            //  };
-            //  favorites.list.row_selected.connect ((row) => {
-            //      select_location.begin (((FavoriteRow)row).item.place, (obj, res) => {
-            //          Spinner.deactivate (spinner);
-            //      });
-            //  });
+            favorites = new Aqui.Favorites (this) {
+                autohide = true
+            };
+            favorites.list.row_selected.connect ((row) => {
+                var place = ((FavoriteRow) row).item.place;
+                var forward = new Geocode.Forward.for_string (place);
+                forward.search_async.begin (null, (obj, res) => {
+                    try {
+                        var places = forward.search_async.end (res);
+                        if (places != null && places.length () > 0) {
+                            center_map (places.nth_data (0));
+                        }
+                    } catch (Error e) {
+                        warning ("Error searching for location: %s", e.message);
+                    }
+                    Spinner.deactivate (spinner);
+                });
+            });
 
-            //  var main_fav_button = new Gtk.MenuButton () {
-            //      popover = favorites,
-            //      icon_name = "emblem-favorite-symbolic"
-            //  };
+            var main_fav_button = new Gtk.MenuButton () {
+                popover = favorites,
+                icon_name = "emblem-favorite-symbolic"
+            };
 
             headerbar = new He.AppBar () {
                 show_back = false,
@@ -193,8 +204,7 @@ public class Aqui.MainWindow : He.ApplicationWindow {
             };
             headerbar.viewtitle_widget = (search_entry);
             headerbar.append (spinner);
-            // TODO: Favourite popup remove favourites.
-            // headerbar.append (main_fav_button);
+            headerbar.append_menu (main_fav_button);
             headerbar.append_menu (menu_button);
             headerbar.add_css_class ("hb");
 
@@ -222,7 +232,10 @@ public class Aqui.MainWindow : He.ApplicationWindow {
             };
             overlay_button.child = bubble_overlay;
 
-            this.set_child (overlay_button);
+            main_overlay = new Gtk.Overlay ();
+            main_overlay.set_child (overlay_button);
+
+            this.set_child (main_overlay);
 
             set_size_request (360, 294);
             default_height = 600;
@@ -267,9 +280,8 @@ public class Aqui.MainWindow : He.ApplicationWindow {
 
                 return false;
             });
-            ((Gtk.Widget)this).add_controller (event_controller_key);
+            ((Gtk.Widget) this).add_controller (event_controller_key);
         } catch (Error e) {
-
         }
     }
 
@@ -278,20 +290,21 @@ public class Aqui.MainWindow : He.ApplicationWindow {
         string translators = (_(""));
 
         var about = new He.AboutWindow (
-            this,
-            "Aqui",
-            "com.fyralabs.Aqui",
-            "0.1.0",
-            "com.fyralabs.Aqui",
-            "https://github.com/tau-OS/aqui/tree/main/po",
-            "https://github.com/tau-OS/aqui/issues/new",
-            "https://github.com/tau-OS/aqui",
-            {translators},
-            {"Fyra Labs"},
-            2023, // Year of first publication.
-            He.AboutWindow.Licenses.GPLV3,
-            He.Colors.GREEN
+                                        this,
+                                        "Aqui",
+                                        "com.fyralabs.Aqui",
+                                        "0.1.0",
+                                        "com.fyralabs.Aqui",
+                                        "https://github.com/tau-OS/aqui/tree/main/po",
+                                        "https://github.com/tau-OS/aqui/issues/new",
+                                        "https://github.com/tau-OS/aqui",
+                                        { translators },
+                                        { "Fyra Labs" },
+                                        2023, // Year of first publication.
+                                        He.AboutWindow.Licenses.GPLV3,
+                                        He.Colors.GREEN
         );
+        main_overlay.add_overlay (about);
         about.present ();
     }
 
@@ -363,28 +376,28 @@ public class Aqui.MainWindow : He.ApplicationWindow {
 
     private void on_search_result_selected (Gtk.ListBoxRow row) {
         if (row == null) {
-            warning("Selected row is null");
+            warning ("Selected row is null");
             return;
         }
 
-        var result_widget = row.get_child() as LocationResult;
+        var result_widget = row.get_child () as LocationResult;
         if (result_widget == null) {
-            warning("Selected row does not contain a LocationResult");
+            warning ("Selected row does not contain a LocationResult");
             return;
         }
 
         var place = result_widget.place;
         if (place == null) {
-            warning("LocationResult does not contain a valid place");
+            warning ("LocationResult does not contain a valid place");
             return;
         }
 
         result_just_selected = true;
-        center_map(place);
-        search_popover.popdown();
+        center_map (place);
+        search_popover.popdown ();
         search_entry.text = place.name ?? "";
 
-        GLib.Timeout.add(400, () => {
+        GLib.Timeout.add (400, () => {
             search_entry.text = "";
             result_just_selected = false;
             return GLib.Source.REMOVE;
@@ -393,7 +406,7 @@ public class Aqui.MainWindow : He.ApplicationWindow {
 
     private void center_map (Geocode.Place loc) {
         if (loc == null || loc.location == null) {
-            warning("Invalid place or location");
+            warning ("Invalid place or location");
             return;
         }
 
@@ -414,15 +427,13 @@ public class Aqui.MainWindow : He.ApplicationWindow {
         search_popover.popdown ();
 
         double x, y;
-        //Gtk.Allocation map_size;
         smap.get_map ().get_viewport ().location_to_widget_coords (this, point.latitude, point.longitude, out x, out y);
-        //smap.get_map ().get_allocation(out map_size);
 
         var child = new Aqui.Wikipedia ();
-        var we = do_wikipedia_lookup (loc.location.get_description ().split(", ")[0]);
+        var we = do_wikipedia_lookup (loc.location.get_description ().split (", ")[0]);
         child.set_wikipedia_entry (we);
 
-        if (bubble.get_first_child() != null) bubble.remove (bubble.get_first_child ());
+        if (bubble.get_first_child () != null)bubble.remove (bubble.get_first_child ());
 
         bubble.append (child);
         bubble.visible = true;
@@ -432,82 +443,95 @@ public class Aqui.MainWindow : He.ApplicationWindow {
             point.unparent ();
         });
 
-        //  var n = favorites.fav_store.get_n_items ();
-        //  for (int i = 0; i < n; i++) {
-        //      var item = (FavoriteItem) favorites.fav_store.get_object (i);
-        //      if (item.place == loc.location.get_description ().split(", ")[0]) {
-        //          child.fav_button.active = bubble.visible ? true : false;
-        //          ((He.ButtonContent)child.fav_button.get_first_child ()).label = (_("Unfavorite"));
-        //      }
-        //  }
+        // Handle favorites functionality
+        var place_name = loc.location.get_description ().split (", ")[0];
+        bool is_favorite = false;
+        var n = favorites.fav_store.get_n_items ();
 
-        //  child.fav_button.toggled.connect (() => {
-        //      if (child.fav_button.active) {
-        //          var item = new FavoriteItem (loc.location.get_description ().split(", ")[0]);
-        //          favorites.fav_store.add (item);
-        //          favorites.save ();
-        //          ((He.ButtonContent)child.fav_button.get_first_child ()).label = (_("Unfavorite"));
-        //      } else {
-        //          var nn = favorites.fav_store.get_n_items ();
-        //          for (int i = 0; i < nn; i++) {
-        //              var item = (FavoriteItem) favorites.fav_store.get_object (i);
-        //              if (item.place == loc.location.get_description ().split(", ")[0]) {
-        //                  ((He.ButtonContent)child.fav_button.get_first_child ()).label = (_("Favorite"));
-        //                  favorites.fav_store.remove (item);
-        //              }
-        //          }
-        //          favorites.save ();
-        //      }
-        //  });
+        // Check if location is already in favorites
+        for (int i = 0; i < n; i++) {
+            var item = (FavoriteItem) favorites.fav_store.get_object (i);
+            if (item.place == place_name) {
+                is_favorite = true;
+                child.fav_button.active = true;
+                ((He.ButtonContent) child.fav_button.get_first_child ()).label = _("Unfavorite");
+                break;
+            }
+        }
+
+        if (!is_favorite) {
+            child.fav_button.active = false;
+            ((He.ButtonContent) child.fav_button.get_first_child ()).label = _("Favorite");
+        }
+
+        child.fav_button.toggled.connect (() => {
+            if (child.fav_button.active) {
+                var item = new FavoriteItem (place_name);
+                favorites.fav_store.add (item);
+                favorites.save ();
+                ((He.ButtonContent) child.fav_button.get_first_child ()).label = _("Unfavorite");
+            } else {
+                var nn = favorites.fav_store.get_n_items ();
+                for (int i = 0; i < nn; i++) {
+                    var item = (FavoriteItem) favorites.fav_store.get_object (i);
+                    if (item.place == place_name) {
+                        favorites.fav_store.remove (item);
+                        ((He.ButtonContent) child.fav_button.get_first_child ()).label = _("Favorite");
+                        break;
+                    }
+                }
+                favorites.save ();
+            }
+        });
     }
 
-    public WikipediaEntry? do_wikipedia_lookup (string term) {
-        var uri = "https://en.wikipedia.org/w/api.php?format=json&action=query&prop=extracts&imageinfo&exintro&explaintext&redirects=1&titles=%s".printf(term);
+    public WikipediaEntry ? do_wikipedia_lookup (string term) {
+        var uri = "https://en.wikipedia.org/w/api.php?format=json&action=query&prop=extracts&imageinfo&exintro&explaintext&redirects=1&titles=%s".printf (term);
         var session = new Soup.Session ();
         var message = new Soup.Message ("GET", uri);
-        var wikipedia_entry = new WikipediaEntry();
+        var wikipedia_entry = new WikipediaEntry ();
 
         try {
             GLib.Bytes byt = session.send_and_read (message, null);
-            var parser = new Json.Parser();
-            parser.load_from_data((string)byt.get_data(), -1);
-            var root_object = parser.get_root().get_object();
-            var pages = root_object.get_object_member("query").get_object_member("pages");
-            var members = pages.get_members();
+            var parser = new Json.Parser ();
+            parser.load_from_data ((string) byt.get_data (), -1);
+            var root_object = parser.get_root ().get_object ();
+            var pages = root_object.get_object_member ("query").get_object_member ("pages");
+            var members = pages.get_members ();
 
             foreach (var member in members) {
-                var element = pages.get_object_member(member);
-                wikipedia_entry.title = element.get_string_member("title");
-                wikipedia_entry.extract = element.get_string_member("extract").split (". ")[0] +
-                                            ". " + element.get_string_member("extract").split (". ")[1] +
-                                            "."; // We are only interested in a small blurb.
-                wikipedia_entry.pageid = element.get_int_member("pageid");
+                var element = pages.get_object_member (member);
+                wikipedia_entry.title = element.get_string_member ("title");
+                wikipedia_entry.extract = element.get_string_member ("extract").split (". ")[0]
+                    + ". " + element.get_string_member ("extract").split (". ")[1]
+                    + "."; // We are only interested in a small blurb.
+                wikipedia_entry.pageid = element.get_int_member ("pageid");
             }
 
-            wikipedia_entry.url = "http://en.wikipedia.org/?curid=%ld".printf((long)wikipedia_entry.pageid);
+            wikipedia_entry.url = "http://en.wikipedia.org/?curid=%ld".printf ((long) wikipedia_entry.pageid);
         } catch (Error e) {
-            warning(_("Unable to load Wikipedia article for: ") + term);
+            warning (_("Unable to load Wikipedia article for: ") + term);
         }
 
-        var imguri = "https://en.wikipedia.org/w/api.php?format=json&action=query&prop=pageimages&pithumbsize=250&pilimit=1&titles=%s".printf(term);
+        var imguri = "https://en.wikipedia.org/w/api.php?format=json&action=query&prop=pageimages&pithumbsize=250&pilimit=1&titles=%s".printf (term);
         var imgsession = new Soup.Session ();
         var imgmessage = new Soup.Message ("GET", imguri);
 
         try {
             GLib.Bytes imgbyt = imgsession.send_and_read (imgmessage, null);
-            var imgparser = new Json.Parser();
-            imgparser.load_from_data((string)imgbyt.get_data(), -1);
-            var imgroot_object = imgparser.get_root().get_object();
-            var imgpages = imgroot_object.get_object_member("query").get_object_member("pages");
-            var imgmembers = imgpages.get_members();
+            var imgparser = new Json.Parser ();
+            imgparser.load_from_data ((string) imgbyt.get_data (), -1);
+            var imgroot_object = imgparser.get_root ().get_object ();
+            var imgpages = imgroot_object.get_object_member ("query").get_object_member ("pages");
+            var imgmembers = imgpages.get_members ();
 
             foreach (var imgmember in imgmembers) {
-                var imgelement = imgpages.get_object_member(imgmember);
-                var imgobj = imgelement.get_object_member("thumbnail");
-                wikipedia_entry.pic = imgobj.get_string_member("source");
+                var imgelement = imgpages.get_object_member (imgmember);
+                var imgobj = imgelement.get_object_member ("thumbnail");
+                wikipedia_entry.pic = imgobj.get_string_member ("source");
             }
         } catch (Error e) {
-            warning(_("Unable to load Wikipedia article image for: ") + term);
+            warning (_("Unable to load Wikipedia article image for: ") + term);
         }
 
         return wikipedia_entry;
